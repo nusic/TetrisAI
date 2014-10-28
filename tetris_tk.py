@@ -12,6 +12,7 @@ Controls:
     'p'             Pause the game.
 """
 #Sebb was here
+#Changed and commited with sublime
 from Tkinter import *
 from time import sleep
 from random import randint

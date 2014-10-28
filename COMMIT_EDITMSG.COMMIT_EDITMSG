@@ -1,0 +1,18 @@
+Changed
+
+# --------------
+# Please enter the commit message for your changes. Everything below
+# this paragraph is ignored, and an empty message aborts the commit.
+# Just close the window to accept your message.
+diff --git a/tetris_tk.py b/tetris_tk.py
+index 1934d66..6e24104 100644
+--- a/tetris_tk.py
++++ b/tetris_tk.py
+@@ -12,6 +12,7 @@ Controls:
+     'p'             Pause the game.
+ """
+ #Sebb was here
++#Changed and commited with sublime
+ from Tkinter import *
+ from time import sleep
+ from random import randint
