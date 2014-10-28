@@ -436,11 +436,11 @@ class game_controller(object):
         
         self.parent.bind("<Left>", self.left_callback)
         self.parent.bind("<Right>", self.right_callback)
-        self.parent.bind("<Up>", self.up_callback)
+        self.parent.bind("<Up>", self.rot_clockwise_callback)
         self.parent.bind("<Down>", self.down_callback)
-        self.parent.bind("a", self.a_callback)
-        self.parent.bind("s", self.s_callback)
-        self.parent.bind("p", self.p_callback)
+        self.parent.bind("a", self.hard_drop_callback)
+        #self.parent.bind("s", self.rot_anticlockwise_callback)
+        self.parent.bind("p", self.pause_callback)
         
         self.shape = self.get_next_shape()
         #self.board.output()
@@ -495,7 +495,7 @@ class game_controller(object):
         if self.shape:
             self.handle_move( RIGHT )
 
-    def up_callback( self, event ):
+    def hard_drop_callback( self, event ):
         if self.shape:
             # drop the tetrominoe to the bottom
             while self.handle_move( DOWN ):
@@ -505,15 +505,15 @@ class game_controller(object):
         if self.shape:
             self.handle_move( DOWN )
             
-    def a_callback( self, event):
+    def rot_clockwise_callback( self, event):
         if self.shape:
             self.shape.rotate(clockwise=True)
             
-    def s_callback( self, event):
+    def rot_anticlockwise_callback( self, event):
         if self.shape:
             self.shape.rotate(clockwise=False)
         
-    def p_callback(self, event):
+    def pause_callback(self, event):
         self.parent.after_cancel( self.after_id )
         tkMessageBox.askquestion(
             title = "Paused!",
