@@ -18,7 +18,7 @@ from random import randint
 import tkMessageBox
 import sys
 
-SCALE = 20
+SCALE = 30
 OFFSET = 3
 MAXX = 10
 MAXY = 22
@@ -63,7 +63,7 @@ class Board( Frame ):
     """
     The board represents the tetris playing area. A grid of x by y blocks.
     """
-    def __init__(self, parent, scale=20, max_x=20, max_y=20, offset=3):
+    def __init__(self, parent, scale=20, max_x=10, max_y=20, offset=3):
         """
         Init and config the tetris board, default configuration:
         Scale (block size in pixels) = 20
@@ -286,11 +286,11 @@ class shape(object):
         for idx in xrange(len(self.blocks)):
             rel_x, rel_y = rel[idx]
             if clockwise:
-                x = middle.x+rel_y
-                y = middle.y-rel_x
-            else:
                 x = middle.x-rel_y
                 y = middle.y+rel_x
+            else:    
+                x = middle.x+rel_y
+                y = middle.y-rel_x
             
             if not self.board.check_block( (x, y) ):
                 return False
@@ -298,11 +298,11 @@ class shape(object):
         for idx in xrange(len(self.blocks)):
             rel_x, rel_y = rel[idx]
             if clockwise:
-                x = middle.x+rel_y
-                y = middle.y-rel_x
-            else:
                 x = middle.x-rel_y
                 y = middle.y+rel_x
+            else:    
+                x = middle.x+rel_y
+                y = middle.y-rel_x
             
             
             diff_x = x - self.blocks[idx].x 
@@ -438,7 +438,7 @@ class game_controller(object):
         self.parent.bind("<Right>", self.right_callback)
         self.parent.bind("<Up>", self.rot_clockwise_callback)
         self.parent.bind("<Down>", self.down_callback)
-        self.parent.bind("a", self.hard_drop_callback)
+        self.parent.bind("<space>", self.hard_drop_callback)
         #self.parent.bind("s", self.rot_anticlockwise_callback)
         self.parent.bind("p", self.pause_callback)
         
