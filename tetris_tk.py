@@ -449,21 +449,30 @@ class GameController(object):
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
         
     def handle_move(self, direction):
+
         #if you can't move then you've hit something
         if not self.shape.move( direction ):
-            
-            # if your heading down then the shape has 'landed'
+            # Being here means we couldn't move the current shape.
+
+            # If we tried to move down but couldn't move, that means 
+            # the current shape has "landed" on the ground.
             if direction == DOWN:
+                #Shortcut for accessing the game state
                 state = self.board.state
+
+                #Set the current shape as "landed"
                 state.setAsLanded(self.shape.blocks)
 
+                #Find the first empty row. One could call this the "tetris-height".
+                #Find all complete rows below first empty row, and remove them
                 firstEmptyRow = state.findFirstEmptyRow()
                 completeRows = state.findCompleteRowsBelow(firstEmptyRow)
-
-                self.score += (100 * len(completeRows)) * len(completeRows)
-
                 self.deleteRows(completeRows, firstEmptyRow)
 
+                #Update score based on # removed rows
+                self.score += (100 * len(completeRows)) * len(completeRows)
+
+                #Delete last shape and get a new one
                 del self.shape
                 self.shape = self.get_next_shape()
                 
