@@ -137,14 +137,19 @@ class State:
         # return the score, calculated by the number of rows deleted.        
         return (100 * rows_deleted) * rows_deleted
 
-    def check_block( self, (x, y) ):
+    def check_block( self, (x, y), includeRoof=True):
         """
         Check if the x, y coordinate can have a block placed there.
         That is; if there is a 'landed' block there or it is outside the
         board boundary, then return False, otherwise return true.
         """
-        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+
+        #if x < 0 or x >= self.width or y < 0 or y >= self.height:
+        if x < 0 or x >= self.width or y >= self.height:
             return False
+        if includeRoof and y < 0:
+            return False
+
         elif self.landed.has_key( (x, y) ):
             return False
         else:
@@ -303,7 +308,7 @@ class shape(object):
                 x = middle.x+rel_y
                 y = middle.y-rel_x
             
-            if not self.board.state.check_block( (x, y) ):
+            if not self.board.state.check_block( (x, y), includeRoof=False):
                 return False
             
         for idx in xrange(len(self.blocks)):
