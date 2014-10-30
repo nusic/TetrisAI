@@ -70,20 +70,18 @@ class State:
         self.width = width
         self.height = height
 
-    def check_for_complete_row(self, board, blocks):
+    def setAsLanded(self, blocks):
         """
-        Look for a complete row of blocks, from the bottom up until the top row
-        or until an empty row is reached.
+        Adds the blocks to those in the grid that have already 'landed'
         """
-        rows_deleted = 0
-        
-        # Add the blocks to those in the grid that have already 'landed'
         for block in blocks:
             self.landed[ block.coord() ] = block.id
-        
-        empty_row = 0
 
-        # find the first empty row
+    def findFirstEmptyRow(self):
+        """
+        Returns the row index of the first empty row
+        """
+        empty_row = -1
         for y in xrange(self.height -1, -1, -1):
             row_is_empty = True
             for x in xrange(self.width):
@@ -93,11 +91,16 @@ class State:
             if row_is_empty:
                 empty_row = y
                 break
+        return empty_row
 
-        # Now scan up and until a complete row is found. 
-        y = self.height - 1
-        while y > empty_row:
- 
+    def findCompleteRowsBelow(self, rowLimit):
+        """
+        Scans from bottom row, up until rowLimit, and finds any complete rows. 
+        """
+        completeRows = []
+        y = self.height - 1 #Bottom row
+        while y > rowLimit:
+
             complete_row = True
             for x in xrange(self.width):
                 if self.landed.get((x,y), None) is None:
@@ -105,37 +108,19 @@ class State:
                     break;
 
             if complete_row:
-                rows_deleted += 1
-                
-                #delete the completed row
-                for x in xrange(self.width):
-                    block = self.landed.pop((x,y))
-                    board.delete_block(block)
-                    del block
+                completeRows.append(y)
+            
+            y -= 1
+        return completeRows
 
-                    
-                # move all the rows above it down
-                for ay in xrange(y-1, empty_row, -1):
-                    for x in xrange(self.width):
-                        block = self.landed.get((x,ay), None)
-                        if block:
-                            block = self.landed.pop((x,ay))
-                            dx,dy = direction_d[DOWN]
-                            
-                            board.move_block(block, direction_d[DOWN])
-                            self.landed[(x+dx, ay+dy)] = block
+    def addAndGetCompleteRows(self, blocks):
+        """
+        Adds the blocks and returns a list of rows that now are completed.
+        """
 
-                # move the empty row down index down too
-                empty_row +=1
-                # y stays same as row above has moved down.
-                
-            else:
-                y -= 1
-                
-        #self.output() # non-gui diagnostic
-        
-        # return the score, calculated by the number of rows deleted.        
-        return (100 * rows_deleted) * rows_deleted
+        self.setAsLanded(blocks)
+        empty_row = self.findFirstEmptyRow()
+        return self.findCompleteRowsBelow(empty_row)
 
     def check_block( self, (x, y), includeRoof=True):
         """
@@ -164,7 +149,7 @@ class State:
                 else:
                     line.append(".")
             print "".join(line)
-            
+
 
 class Board( Frame ):
     """
@@ -408,7 +393,7 @@ class i_shape( shape_limited_rotate ):
         coords =[(4,0),(3,0),(5,0),(6,0)]
         return super(i_shape, cls).check_and_create(board, coords, "blue")
         
-class game_controller(object):
+class GameController(object):
     """
     Main game loop and receives GUI callback events for keypresses etc...
     """
@@ -469,9 +454,16 @@ class game_controller(object):
             
             # if your heading down then the shape has 'landed'
             if direction == DOWN:
-                self.score += self.board.state.check_for_complete_row(self.board,
-                    self.shape.blocks
-                    )
+                state = self.board.state
+                state.setAsLanded(self.shape.blocks)
+
+                firstEmptyRow = state.findFirstEmptyRow()
+                completeRows = state.findCompleteRowsBelow(firstEmptyRow)
+
+                self.score += (100 * len(completeRows)) * len(completeRows)
+
+                self.deleteRows(completeRows, firstEmptyRow)
+
                 del self.shape
                 self.shape = self.get_next_shape()
                 
@@ -502,6 +494,29 @@ class game_controller(object):
                 # Signal that the shape has 'landed'
                 return False
         return True
+
+    def deleteRows(self, rows, empty_row=0):
+        #delete the completed row
+        deletes = 0
+        for y in rows:
+            y += deletes
+            for x in xrange(self.board.state.width):
+                block = self.board.state.landed.pop((x,y))
+                self.board.delete_block(block)
+                del block
+
+            # move all the rows above it down
+            for ay in xrange(y-1, empty_row, -1):
+                for x in xrange(self.board.state.width):
+                    block = self.board.state.landed.get((x,ay), None)
+                    if block:
+                        block = self.board.state.landed.pop((x,ay))
+                        dx,dy = direction_d[DOWN]
+                        
+                        self.board.move_block(block, direction_d[DOWN])
+                        self.board.state.landed[(x+dx, ay+dy)] = block
+            deletes += 1
+
 
     def left_callback( self, event ):
         if self.shape:
@@ -553,6 +568,6 @@ class game_controller(object):
 if __name__ == "__main__":
     root = Tk()
     root.title("Tetris Tk")
-    theGame = game_controller( root )
+    theGame = GameController( root )
     
     root.mainloop()
