@@ -60,6 +60,107 @@ class status_bar( Frame ):
         self.label.config(test="")
         self.label.update_idletasks()
 
+class State:
+    """
+    This class is a complete representation of the current game state.
+    """
+
+    def __init__(self, width=10, height=20):
+        self.landed = {}
+        self.width = width
+        self.height = height
+
+    def check_for_complete_row(self, board, blocks):
+        """
+        Look for a complete row of blocks, from the bottom up until the top row
+        or until an empty row is reached.
+        """
+        rows_deleted = 0
+        
+        # Add the blocks to those in the grid that have already 'landed'
+        for block in blocks:
+            self.landed[ block.coord() ] = block.id
+        
+        empty_row = 0
+
+        # find the first empty row
+        for y in xrange(self.height -1, -1, -1):
+            row_is_empty = True
+            for x in xrange(self.width):
+                if self.landed.get((x,y), None):
+                    row_is_empty = False
+                    break;
+            if row_is_empty:
+                empty_row = y
+                break
+
+        # Now scan up and until a complete row is found. 
+        y = self.height - 1
+        while y > empty_row:
+ 
+            complete_row = True
+            for x in xrange(self.width):
+                if self.landed.get((x,y), None) is None:
+                    complete_row = False
+                    break;
+
+            if complete_row:
+                rows_deleted += 1
+                
+                #delete the completed row
+                for x in xrange(self.width):
+                    block = self.landed.pop((x,y))
+                    board.delete_block(block)
+                    del block
+
+                    
+                # move all the rows above it down
+                for ay in xrange(y-1, empty_row, -1):
+                    for x in xrange(self.width):
+                        block = self.landed.get((x,ay), None)
+                        if block:
+                            block = self.landed.pop((x,ay))
+                            dx,dy = direction_d[DOWN]
+                            
+                            board.move_block(block, direction_d[DOWN])
+                            self.landed[(x+dx, ay+dy)] = block
+
+                # move the empty row down index down too
+                empty_row +=1
+                # y stays same as row above has moved down.
+                
+            else:
+                y -= 1
+                
+        #self.output() # non-gui diagnostic
+        
+        # return the score, calculated by the number of rows deleted.        
+        return (100 * rows_deleted) * rows_deleted
+
+    def check_block( self, (x, y) ):
+        """
+        Check if the x, y coordinate can have a block placed there.
+        That is; if there is a 'landed' block there or it is outside the
+        board boundary, then return False, otherwise return true.
+        """
+        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+            return False
+        elif self.landed.has_key( (x, y) ):
+            return False
+        else:
+            return True
+
+    def output( self ):
+        for y in xrange(self.height):
+            line = []
+            for x in xrange(self.width):
+                if self.landed.get((x,y), None):
+                    line.append("X")
+                else:
+                    line.append(".")
+            print "".join(line)
+            
+
 class Board( Frame ):
     """
     The board represents the tetris playing area. A grid of x by y blocks.
@@ -75,11 +176,10 @@ class Board( Frame ):
         Frame.__init__(self, parent)
         
         # blocks are indexed by there corrdinates e.g. (4,5), these are
-        self.landed = {}
+        self.state = State(max_x, max_y)
+
         self.parent = parent
         self.scale = scale
-        self.max_x = max_x
-        self.max_y = max_y
         self.offset = offset        
 
         self.canvas = Canvas(parent,
@@ -87,83 +187,6 @@ class Board( Frame ):
                              width= (max_x * scale)+offset)
         self.canvas.pack()
 
-    def check_for_complete_row( self, blocks ):
-        """
-        Look for a complete row of blocks, from the bottom up until the top row
-        or until an empty row is reached.
-        """
-        rows_deleted = 0
-        
-        # Add the blocks to those in the grid that have already 'landed'
-        for block in blocks:
-            self.landed[ block.coord() ] = block.id
-        
-        empty_row = 0
-
-        # find the first empty row
-        for y in xrange(self.max_y -1, -1, -1):
-            row_is_empty = True
-            for x in xrange(self.max_x):
-                if self.landed.get((x,y), None):
-                    row_is_empty = False
-                    break;
-            if row_is_empty:
-                empty_row = y
-                break
-
-        # Now scan up and until a complete row is found. 
-        y = self.max_y - 1
-        while y > empty_row:
- 
-            complete_row = True
-            for x in xrange(self.max_x):
-                if self.landed.get((x,y), None) is None:
-                    complete_row = False
-                    break;
-
-            if complete_row:
-                rows_deleted += 1
-                
-                #delete the completed row
-                for x in xrange(self.max_x):
-                    block = self.landed.pop((x,y))
-                    self.delete_block(block)
-                    del block
-
-                    
-                # move all the rows above it down
-                for ay in xrange(y-1, empty_row, -1):
-                    for x in xrange(self.max_x):
-                        block = self.landed.get((x,ay), None)
-                        if block:
-                            block = self.landed.pop((x,ay))
-                            dx,dy = direction_d[DOWN]
-                            
-                            self.move_block(block, direction_d[DOWN])
-                            self.landed[(x+dx, ay+dy)] = block
-
-                # move the empty row down index down too
-                empty_row +=1
-                # y stays same as row above has moved down.
-                
-            else:
-                y -= 1
-                
-        #self.output() # non-gui diagnostic
-        
-        # return the score, calculated by the number of rows deleted.        
-        return (100 * rows_deleted) * rows_deleted
-                
-    def output( self ):
-        for y in xrange(self.max_y):
-            line = []
-            for x in xrange(self.max_x):
-                if self.landed.get((x,y), None):
-                    line.append("X")
-                else:
-                    line.append(".")
-            print "".join(line)
-            
     def add_block( self, (x, y), colour):
         """
         Create a block by drawing it on the canvas, return
@@ -191,19 +214,6 @@ class Board( Frame ):
         """
         self.canvas.delete( id )
         
-    def check_block( self, (x, y) ):
-        """
-        Check if the x, y coordinate can have a block placed there.
-        That is; if there is a 'landed' block there or it is outside the
-        board boundary, then return False, otherwise return true.
-        """
-        if x < 0 or x >= self.max_x or y < 0 or y >= self.max_y:
-            return False
-        elif self.landed.has_key( (x, y) ):
-            return False
-        else:
-            return True
-
 class Block(object):
     def __init__( self, id, (x, y)):
         self.id = id
@@ -226,7 +236,7 @@ class shape(object):
         None.
         """
         for coord in coords:
-            if not board.check_block( coord ):
+            if not board.state.check_block( coord ):
                 return None
         
         return cls( board, coords, colour)
@@ -255,7 +265,7 @@ class shape(object):
             x = block.x + d_x
             y = block.y + d_y
             
-            if not self.board.check_block( (x, y) ):
+            if not self.board.state.check_block( (x, y) ):
                 return False
             
         for block in self.blocks:
@@ -293,7 +303,7 @@ class shape(object):
                 x = middle.x+rel_y
                 y = middle.y-rel_x
             
-            if not self.board.check_block( (x, y) ):
+            if not self.board.state.check_block( (x, y) ):
                 return False
             
         for idx in xrange(len(self.blocks)):
@@ -454,7 +464,7 @@ class game_controller(object):
             
             # if your heading down then the shape has 'landed'
             if direction == DOWN:
-                self.score += self.board.check_for_complete_row(
+                self.score += self.board.state.check_for_complete_row(self.board,
                     self.shape.blocks
                     )
                 del self.shape
