@@ -1,0 +1,19 @@
+Progress report (4 pages, due Thu Nov 13): Propose a model and an algorithm for tackling your task.
+You should describe the model and algorithm in detail and use a concrete example to demonstrate how the model and algorithm work.
+Don't describe methods in general; describe precisely how they apply to your problem (what are variables, factors, states, etc.)?
+You should also have made a decent amount of progress on implementing the algorithm.
+
+Algorithm: Search algorithm.
+Find valid states by using the bulit function "drop".
+Drop from every x wise position for every valid rotation.
+
+Validate state by features.
+Feature 1: How low the block are placed. (greater y-value)
+Feature 2: Is there some holes near the droped teremino
+Feature 3: Total rows
+Feature 4: Wells
+Feature 5: Holes
+Feature 6: Hoes
+
+Validate for the current teremino.
+Also do this for n next known tereminos and find the best positon.
