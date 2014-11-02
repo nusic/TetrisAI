@@ -444,14 +444,39 @@ class GameController(object):
         self.parent.bind("p", self.pause_callback)
         
         self.shape = self.get_next_shape()
+
+        self.ghostPiece = None
+        self.updateGhostPiece()
+
+
         #self.board.output()
 
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
+    
+    def updateGhostPiece(self):
+
+        if self.ghostPiece != None:
+            for block in self.ghostPiece.blocks:
+                self.board.delete_block(block.id)
+                del block
+
+        coords = []
+        for block in self.shape.blocks:
+            coords.append( (block.x, block.y) )
+
+        gp = shape(self.board, coords, "black")
+
+        while gp.move( DOWN ):
+            pass
         
+        self.ghostPiece = gp
+
     def handle_move(self, direction):
 
         #if you can't move then you've hit something
-        if not self.shape.move( direction ):
+        playerPieceMoved = self.shape.move( direction )
+
+        if not playerPieceMoved:
             # Being here means we couldn't move the current shape.
 
             # If we tried to move down but couldn't move, that means 
@@ -501,7 +526,9 @@ class GameController(object):
                 )
                 
                 # Signal that the shape has 'landed'
+                self.updateGhostPiece()
                 return False
+        self.updateGhostPiece()
         return True
 
     def deleteRows(self, rows, empty_row=0):
@@ -548,10 +575,12 @@ class GameController(object):
     def rot_clockwise_callback( self, event):
         if self.shape:
             self.shape.rotate(clockwise=True)
+            self.updateGhostPiece()
             
     def rot_anticlockwise_callback( self, event):
         if self.shape:
             self.shape.rotate(clockwise=False)
+            self.updateGhostPiece()
         
     def pause_callback(self, event):
         self.parent.after_cancel( self.after_id )
@@ -571,7 +600,11 @@ class GameController(object):
         Randomly select which tetrominoe will be used next.
         """
         the_shape = self.shapes[ randint(0,len(self.shapes)-1) ]
-        return the_shape.check_and_create(self.board)
+        shape = the_shape.check_and_create(self.board)
+        if shape is not None:
+            shape.move("down")
+            shape.move("down")
+        return shape
         
         
 if __name__ == "__main__":
