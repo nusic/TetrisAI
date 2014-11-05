@@ -18,6 +18,10 @@ from time import sleep
 from random import randint
 import tkMessageBox
 import sys
+import copy
+
+#True to use the AI, False to play the game
+AI = True
 
 SCALE = 30
 OFFSET = 3
@@ -154,16 +158,19 @@ class State:
         holes = 0
         radius = 1
         checked = []
+        totHeight = 0
 
         ghostCoords = [(block.x,block.y) for block in ghostBlocks]
         for block in ghostBlocks:
+            totHeight += self.height-block.y
             for x in xrange(block.x-1,block.x+2):
                 for y in xrange(block.y,block.y+2):
                     if x in range(0,self.width) and y in range(0,self.height):
                         if (x,y) not in checked and (x,y) not in ghostCoords and (x,y) not in self.landed:
                             holes += 1
                         checked.append((x,y))
-        print holes
+
+        return holes + (totHeight/4)
             #print self.landed[blocks]
 
 class Board( Frame ):
@@ -330,7 +337,20 @@ class shape(object):
             self.blocks[idx].y = y
        
         return True
-    
+
+    def setCoords(self,coords):
+        for i in range(len(self.blocks)):
+            x,y = coords[i]
+            dx = x-self.blocks[i].x
+            dy = y-self.blocks[i].y
+            self.blocks[i].x = x;
+            self.blocks[i].y = y;
+
+            self.board.move_block( self.blocks[i].id, (dx, dy) )
+        return True
+
+
+
 class shape_limited_rotate( shape ):
     """
     This is a base class for the shapes like the S, Z and I that don't fully
@@ -459,7 +479,10 @@ class GameController(object):
         self.parent.bind("p", self.pause_callback)
         
         self.shape = self.get_next_shape()
+        for i in range(10):
+            self.shape.move(LEFT)
 
+        print self.shape.blocks
         self.ghostPiece = None
         self.updateGhostPiece()
 
@@ -486,13 +509,12 @@ class GameController(object):
         
         self.ghostPiece = gp
         blocks = [(block.x,block.y) for block in self.ghostPiece.blocks]
-        self.board.state.evalGhostPiece(self.ghostPiece.blocks)
+        return self.board.state.evalGhostPiece(self.ghostPiece.blocks)
 
     def handle_move(self, direction):
 
         #if you can't move then you've hit something
         playerPieceMoved = self.shape.move( direction )
-
         if not playerPieceMoved:
             # Being here means we couldn't move the current shape.
 
@@ -532,6 +554,10 @@ class GameController(object):
                     self.parent.destroy()
                     sys.exit(0)
                 
+                for i in range(10):
+                    self.shape.move(LEFT)
+
+
                 # do we go up a level?
                 if (self.level < NO_OF_LEVELS and 
                     self.score >= self.thresholds[ self.level]):
@@ -609,7 +635,30 @@ class GameController(object):
     
     def move_my_shape( self ):
         if self.shape:
-            self.handle_move( DOWN )
+            
+            if AI:
+                coords = []
+                for block in (self.shape.blocks):
+                    coords.append((block.x,block.y))
+
+                moves = []
+                for i in range(10):
+                    coords = []
+                    for block in (self.shape.blocks):
+                        coords.append((block.x,block.y))
+                    moves.append((self.updateGhostPiece(), coords))    
+                    self.shape.move(RIGHT)
+
+                coords = min(moves)[1]
+
+                self.shape.setCoords(coords)
+
+
+
+                while self.handle_move( DOWN ):
+                    pass
+            else:
+                self.handle_move( DOWN )
             self.after_id = self.parent.after( self.delay, self.move_my_shape )
         
     def get_next_shape( self ):
