@@ -150,6 +150,21 @@ class State:
                     line.append(".")
             print "".join(line)
 
+    def evalGhostPiece(self, ghostBlocks):
+        holes = 0
+        radius = 1
+        checked = []
+
+        ghostCoords = [(block.x,block.y) for block in ghostBlocks]
+        for block in ghostBlocks:
+            for x in xrange(block.x-1,block.x+2):
+                for y in xrange(block.y,block.y+2):
+                    if x in range(0,self.width) and y in range(0,self.height):
+                        if (x,y) not in checked and (x,y) not in ghostCoords and (x,y) not in self.landed:
+                            holes += 1
+                        checked.append((x,y))
+        print holes
+            #print self.landed[blocks]
 
 class Board( Frame ):
     """
@@ -470,6 +485,8 @@ class GameController(object):
             pass
         
         self.ghostPiece = gp
+        blocks = [(block.x,block.y) for block in self.ghostPiece.blocks]
+        self.board.state.evalGhostPiece(self.ghostPiece.blocks)
 
     def handle_move(self, direction):
 
