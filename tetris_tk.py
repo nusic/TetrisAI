@@ -173,6 +173,30 @@ class State:
         return holes + (totHeight/4)
             #print self.landed[blocks]
 
+    def succAndReward(self, ghostBlocks):
+        oldLanded = copy.copy(self.landed)
+        holes = 0
+        radius = 1
+        checked = []
+        totHeight = 0
+
+        ghostCoords = [(block.x,block.y) for block in ghostBlocks]
+        for block in ghostBlocks:
+            totHeight += self.height-block.y
+            for x in xrange(block.x-1,block.x+2):
+                for y in xrange(block.y,block.y+2):
+                    if x in range(0,self.width) and y in range(0,self.height):
+                        if (x,y) not in checked and (x,y) not in ghostCoords and (x,y) not in self.landed:
+                            holes += 1
+                        checked.append((x,y))
+
+        self.setAsLanded(ghostBlocks)
+        succAndReward = (holes + (totHeight/4),self.landed)
+        self.landed = oldLanded
+        return succAndReward
+
+    def setLanded(self, landed):
+        self.landed = landed
 class Board( Frame ):
     """
     The board represents the tetris playing area. A grid of x by y blocks.
@@ -440,6 +464,7 @@ class GameController(object):
         self.score = 0
         self.level = 0
         self.delay = 1000    #ms
+        self.nextShapes = []
         
         #lookup table
         self.shapes = [square_shape,
@@ -479,13 +504,9 @@ class GameController(object):
         self.parent.bind("p", self.pause_callback)
         
         self.shape = self.get_next_shape()
-        for i in range(10):
-            self.shape.move(LEFT)
 
-        print self.shape.blocks
         self.ghostPiece = None
         self.updateGhostPiece()
-
 
         #self.board.output()
 
@@ -508,7 +529,8 @@ class GameController(object):
             pass
         
         self.ghostPiece = gp
-        blocks = [(block.x,block.y) for block in self.ghostPiece.blocks]
+
+        #print self.board.state.succAndReward(self.ghostPiece.blocks)
         return self.board.state.evalGhostPiece(self.ghostPiece.blocks)
 
     def handle_move(self, direction):
@@ -632,35 +654,52 @@ class GameController(object):
             message="Continue?",
             type=tkMessageBox.OK)
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
-    
+
     def move_my_shape( self ):
         if self.shape:
             
             if AI:
-                coords = []
-                for block in (self.shape.blocks):
-                    coords.append((block.x,block.y))
-
                 moves = []
+
                 for i in range(10):
-                    coords = []
-                    for block in (self.shape.blocks):
-                        coords.append((block.x,block.y))
-                    moves.append((self.updateGhostPiece(), coords))    
-                    self.shape.move(RIGHT)
+                    self.shape.move(LEFT)
+
+                moves += self.move_right_and_validate()
+                self.move_left_and_rotate()
+                moves += self.move_right_and_validate()
+                self.move_left_and_rotate()
+                moves += self.move_right_and_validate()
+                self.move_left_and_rotate()
+                moves += self.move_right_and_validate()
 
                 coords = min(moves)[1]
 
                 self.shape.setCoords(coords)
 
-
-
                 while self.handle_move( DOWN ):
                     pass
+
+                self.after_id = self.parent.after( 100 , self.move_my_shape )
             else:
                 self.handle_move( DOWN )
-            self.after_id = self.parent.after( self.delay, self.move_my_shape )
-        
+                self.after_id = self.parent.after( self.delay, self.move_my_shape )
+
+
+    def move_right_and_validate(self):
+        if self.shape:
+            moves = []
+            for _ in range(10):
+                moves.append((self.updateGhostPiece(), [block.coord() for block in self.shape.blocks]))
+                self.shape.move(RIGHT)
+        return moves
+
+    def move_left_and_rotate(self):
+        for _ in range(5):
+            self.shape.move(LEFT)
+        self.shape.rotate(clockwise=True)
+        for _ in range(5):
+            self.shape.move(LEFT)
+
     def get_next_shape( self ):
         """
         Randomly select which tetrominoe will be used next.
