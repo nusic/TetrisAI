@@ -464,7 +464,8 @@ class GameController(object):
         self.score = 0
         self.level = 0
         self.delay = 1000    #ms
-        self.nextShapes = []
+        self.nexShapes = []
+        self.numNextShapes = 2
         
         #lookup table
         self.shapes = [square_shape,
@@ -503,7 +504,9 @@ class GameController(object):
         #self.parent.bind("s", self.rot_anticlockwise_callback)
         self.parent.bind("p", self.pause_callback)
         
-        self.shape = self.get_next_shape()
+        self.nexShapes += self.get_next_shapes(self.numNextShapes)
+        self.shape = self.create_shape(self.nexShapes.pop(0))
+        self.nexShapes += self.get_next_shapes(self.numNextShapes)
 
         self.ghostPiece = None
         self.updateGhostPiece()
@@ -560,8 +563,10 @@ class GameController(object):
 
                 #Delete last shape and get a new one
                 del self.shape
-                self.shape = self.get_next_shape()
-                
+                self.shape = self.create_shape(self.nexShapes.pop(0))
+                self.nexShapes += self.get_next_shapes(1)
+                print self.nexShapes
+                print
                 # If the shape returned is None, then this indicates that
                 # that the check before creating it failed and the
                 # game is over!
@@ -700,17 +705,21 @@ class GameController(object):
         for _ in range(5):
             self.shape.move(LEFT)
 
-    def get_next_shape( self ):
+    def get_next_shapes( self, num ):
         """
         Randomly select which tetrominoe will be used next.
         """
-        the_shape = self.shapes[ randint(0,len(self.shapes)-1) ]
+        shapes = []
+        for _ in range(num):
+            shapes.append(self.shapes[randint(0,len(self.shapes)-1)])
+        return shapes
+
+    def create_shape( self, the_shape):
         shape = the_shape.check_and_create(self.board)
         if shape is not None:
             shape.move("down")
             shape.move("down")
         return shape
-        
         
 if __name__ == "__main__":
     root = Tk()
