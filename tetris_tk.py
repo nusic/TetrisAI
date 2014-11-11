@@ -154,33 +154,20 @@ class State:
                     line.append(".")
             print "".join(line)
 
-    def evalGhostPiece(self, ghostBlocks):
+    def reward(self, dropedShapes):
+        currShape = dropedShapes[0]
+
+        landed = copy.copy(self.landed)
+
         holes = 0
         radius = 1
         checked = []
         totHeight = 0
 
-        ghostCoords = [(block.x,block.y) for block in ghostBlocks]
-        for block in ghostBlocks:
-            totHeight += self.height-block.y
-            for x in xrange(block.x-1,block.x+2):
-                for y in xrange(block.y,block.y+2):
-                    if x in range(0,self.width) and y in range(0,self.height):
-                        if (x,y) not in checked and (x,y) not in ghostCoords and (x,y) not in self.landed:
-                            holes += 1
-                        checked.append((x,y))
-
-        return holes + (totHeight/4)
-            #print self.landed[blocks]
-
-    def validate(self, currShape, nextShape):
-        holes = 0
-        radius = 1
-        checked = []
-        totHeight = 0
-
+        #validate on droped shapes
         coords = [(block.coord()) for block in currShape.blocks]
-        coords += [(block.coord()) for block in nextShape.blocks]
+        for i in range(1,len(dropedShapes)):
+            coords += [(block.coord()) for block in dropedShapes[i].blocks]
         for block in currShape.blocks:
             totHeight += self.height-block.y
             for x in xrange(block.x-1,block.x+2):
@@ -190,10 +177,16 @@ class State:
                             holes += 1
                         checked.append((x,y))
 
+        #validate when fist shape has landed
+        self.setAsLanded(currShape.blocks)
+        #validate when all shapes has landed
+        for i in range(1,len(dropedShapes)):
+            self.setAsLanded(dropedShapes[i].blocks)
+
+        self.landed = landed
+
         return holes + (totHeight/4)
 
-    def setLanded(self, landed):
-        self.landed = landed
 class Board( Frame ):
     """
     The board represents the tetris playing area. A grid of x by y blocks.
@@ -462,7 +455,8 @@ class GameController(object):
         self.level = 0
         self.delay = 1000    #ms
         self.nextShapes = []
-        self.numNextShapes = 2
+        self.numNextShapes = 1
+        self.moves = []
         
         #lookup table
         self.shapes = [square_shape,
@@ -501,8 +495,11 @@ class GameController(object):
         #self.parent.bind("s", self.rot_anticlockwise_callback)
         self.parent.bind("p", self.pause_callback)
         
-        self.nextShapes += self.get_next_shapes(self.numNextShapes)
-        self.shape = self.create_shape(self.nextShapes.pop(0))
+        if self.numNextShapes != 0:
+            self.nextShapes += self.get_next_shapes(self.numNextShapes)
+            self.shape = self.create_shape(self.nextShapes.pop(0))
+        else:
+            self.shape = self.create_shape(self.get_next_shapes(1)[0])
         self.nextShapes += self.get_next_shapes(1)
 
         self.ghostPiece = None
@@ -529,9 +526,6 @@ class GameController(object):
             pass
         
         self.ghostPiece = gp
-
-        #print self.board.state.succAndReward(self.ghostPiece.blocks)
-        return self.board.state.evalGhostPiece(self.ghostPiece.blocks)
 
     def handle_move(self, direction):
 
@@ -575,10 +569,6 @@ class GameController(object):
                     Toplevel().destroy()
                     self.parent.destroy()
                     sys.exit(0)
-                
-                for i in range(10):
-                    self.shape.move(LEFT)
-
 
                 # do we go up a level?
                 if (self.level < NO_OF_LEVELS and 
@@ -659,43 +649,14 @@ class GameController(object):
         if self.shape:
             
             if AI:
-                moves = []
-
-                # for i in range(10):
-                #     self.shape.move(LEFT)
-
-                # moves += self.move_right_and_validate()
-                # self.move_left_and_rotate()
-                # moves += self.move_right_and_validate()
-                # self.move_left_and_rotate()
-                # moves += self.move_right_and_validate()
-                # self.move_left_and_rotate()
-                # moves += self.move_right_and_validate()
-
-                # coords = min(moves)[1]
-
-                # self.shape.setCoords(coords)
-
-                # while self.handle_move( DOWN ):
-                #     pass
-
-                moves = []
-                nextShape = self.create_shape(self.nextShapes[0])
-                for _ in range(10):
-                    self.shape.move(LEFT)
-                    nextShape.move(LEFT)
-
-
-                moves += self.moveShapes(self.shape, nextShape)
-                self.delShape(nextShape)
-
-                print min(moves)[1]
-                coords = min(moves)[1]
+                self.moves = []
+                self.recursiveMove(self.shape,[],0)
+                coords = min(self.moves)[1]
                 self.shape.setCoords(coords)
-
-                while self.handle_move( DOWN ):
-                     pass                
+                self.handle_move(DOWN)
+                
                 self.after_id = self.parent.after( 1 , self.move_my_shape )
+
             else:
                 self.handle_move( DOWN )
                 self.after_id = self.parent.after( self.delay, self.move_my_shape )
@@ -708,8 +669,6 @@ class GameController(object):
             pass
 
         return dropedShape
-        #print self.board.state.succAndReward(self.ghostPiece.blocks)
-        #return self.board.state.evalGhostPiece(self.ghostPiece.blocks)
 
     def shapeCoords(self, shape):
         coords = []
@@ -721,53 +680,33 @@ class GameController(object):
         for block in shape.blocks:
             self.board.delete_block(block.id)
             del block
+        del shape
 
-    #def move_right_and_validate(self):
-    #    if self.shape:
-    #        moves = []
-    #        for _ in range(10):
-    #            moves.append((self.updateGhostPiece(), [block.coord() for block in self.shape.blocks]))
-    #            self.shape.move(RIGHT)
-    #   return moves
+    def recursiveMove(self,newShape,dropedShapes,n):
+        if newShape != None:
+            if n <= self.numNextShapes:
+                shape = self.create_shape(newShape)
+                for _ in range(10):
+                    self.shape.move(LEFT)
+                self.moveRightReward(shape,dropedShapes,n)
+                self.moveLeftRotate(shape)
+                self.moveRightReward(shape,dropedShapes,n)
+                self.moveLeftRotate(shape)
+                self.moveRightReward(shape,dropedShapes,n)
+                self.moveLeftRotate(shape)
+                self.moveRightReward(shape,dropedShapes,n)
+                self.delShape(shape)
+            else:
+                self.moves += [(self.board.state.reward(dropedShapes), self.shapeCoords(dropedShapes[0]))] 
 
-
-    def moveShapes(self, currShape, nextShape):
-        moves = []
-        moves += self.moveCurrRight(currShape,nextShape)
-        self.moveLeftRotate(currShape)
-        moves += self.moveCurrRight(currShape,nextShape)
-        self.moveLeftRotate(currShape)
-        moves += self.moveCurrRight(currShape,nextShape)
-        self.moveLeftRotate(currShape)
-        moves += self.moveCurrRight(currShape,nextShape)
-        return moves
-
-    def moveCurrRight(self,currShape,nextShape):
-        moves = []
+    def moveRightReward(self,shape,dropedShapes,n):
         for _ in range(10):
-            moves += self.moveNextRight(currShape,nextShape)
-            self.moveLeftRotate(nextShape)
-            moves += self.moveNextRight(currShape,nextShape)
-            self.moveLeftRotate(nextShape)
-            moves += self.moveNextRight(currShape,nextShape)
-            self.moveLeftRotate(nextShape)
-            moves += self.moveNextRight(currShape,nextShape)
-            currShape.move(RIGHT)
-        return moves
-
-    def moveNextRight(self,currShape,nextShape):
-        if currShape != None and nextShape != None:
-            moves = []
-            currDropped = self.dropShape(currShape)
-            for _ in range(10):
-                nextDropped = self.dropShape(nextShape)
-                moves.append((self.board.state.validate(currDropped,nextDropped),self.shapeCoords(currShape)))
-                self.delShape(nextDropped)
-                del nextDropped
-            nextShape.move(RIGHT)
-            self.delShape(currDropped)
-            del currDropped
-            return moves
+            dropedShape = self.dropShape(shape)
+            shape.move(RIGHT)
+            copyDroped = copy.copy(dropedShapes)
+            copyDroped.append(dropedShape)
+            self.recursiveMove(self.nextShapes[n-1],copyDroped,n+1)
+            self.delShape(dropedShape)
 
     def moveLeftRotate(self, shape):
         for _ in range(5):
