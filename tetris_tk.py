@@ -73,6 +73,7 @@ class State:
         self.landed = {}
         self.width = width
         self.height = height
+        self.savedLanded = []
 
     def setAsLanded(self, blocks):
         """
@@ -157,8 +158,6 @@ class State:
     def reward(self, dropedShapes):
         currShape = dropedShapes[0]
 
-        landed = copy.copy(self.landed)
-
         holes = 0
         radius = 1
         checked = []
@@ -177,15 +176,13 @@ class State:
                             holes += 1
                         checked.append((x,y))
 
-        #validate when fist shape has landed
-        self.setAsLanded(currShape.blocks)
-        #validate when all shapes has landed
-        for i in range(1,len(dropedShapes)):
-            self.setAsLanded(dropedShapes[i].blocks)
-
-        self.landed = landed
-
         return holes + (totHeight/4)
+
+    def pushLanded(self):
+        self.savedLanded.append(copy.copy(self.landed))
+
+    def popLanded(self):
+        self.landed = self.savedLanded.pop(len(self.savedLanded)-1)
 
 class Board( Frame ):
     """
@@ -510,22 +507,22 @@ class GameController(object):
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
     
     def updateGhostPiece(self):
+        if not AI:
+            if self.ghostPiece != None:
+                for block in self.ghostPiece.blocks:
+                    self.board.delete_block(block.id)
+                    del block
 
-        if self.ghostPiece != None:
-            for block in self.ghostPiece.blocks:
-                self.board.delete_block(block.id)
-                del block
+            coords = []
+            for block in self.shape.blocks:
+                coords.append( (block.x, block.y) )
 
-        coords = []
-        for block in self.shape.blocks:
-            coords.append( (block.x, block.y) )
+            gp = shape(self.board, coords, "black")
 
-        gp = shape(self.board, coords, "black")
-
-        while gp.move( DOWN ):
-            pass
-        
-        self.ghostPiece = gp
+            while gp.move( DOWN ):
+                pass
+            
+            self.ghostPiece = gp
 
     def handle_move(self, direction):
 
@@ -650,8 +647,11 @@ class GameController(object):
             
             if AI:
                 self.moves = []
-                self.recursiveMove(self.shape,[],0)
+                self.board.state.pushLanded()
+                self.recursiveMove(self.shape,[],0,0)
                 coords = min(self.moves)[1]
+                self.board.state.popLanded()
+
                 self.shape.setCoords(coords)
                 self.handle_move(DOWN)
                 
@@ -682,30 +682,33 @@ class GameController(object):
             del block
         del shape
 
-    def recursiveMove(self,newShape,dropedShapes,n):
+    def recursiveMove(self,newShape,dropedShapes,n,reward):
         if newShape != None:
             if n <= self.numNextShapes:
                 shape = self.create_shape(newShape)
                 for _ in range(10):
                     self.shape.move(LEFT)
-                self.moveRightReward(shape,dropedShapes,n)
+                self.moveRightReward(shape,dropedShapes,n,reward)
                 self.moveLeftRotate(shape)
-                self.moveRightReward(shape,dropedShapes,n)
+                self.moveRightReward(shape,dropedShapes,n,reward)
                 self.moveLeftRotate(shape)
-                self.moveRightReward(shape,dropedShapes,n)
+                self.moveRightReward(shape,dropedShapes,n,reward)
                 self.moveLeftRotate(shape)
-                self.moveRightReward(shape,dropedShapes,n)
+                self.moveRightReward(shape,dropedShapes,n,reward)
                 self.delShape(shape)
             else:
-                self.moves += [(self.board.state.reward(dropedShapes), self.shapeCoords(dropedShapes[0]))] 
+                self.moves += [(reward + self.board.state.reward(dropedShapes), self.shapeCoords(dropedShapes[0]))] 
 
-    def moveRightReward(self,shape,dropedShapes,n):
+    def moveRightReward(self,shape,dropedShapes,n,reward):
         for _ in range(10):
             dropedShape = self.dropShape(shape)
+            dropedShapes.append(dropedShape)
+            self.board.state.pushLanded()
+            #reward += self.board.state.reward(dropedShapes)
+            self.recursiveMove(self.nextShapes[n-1],dropedShapes,n+1,reward)
             shape.move(RIGHT)
-            copyDroped = copy.copy(dropedShapes)
-            copyDroped.append(dropedShape)
-            self.recursiveMove(self.nextShapes[n-1],copyDroped,n+1)
+            dropedShapes.pop(len(dropedShapes)-1)
+            self.board.state.popLanded()
             self.delShape(dropedShape)
 
     def moveLeftRotate(self, shape):
