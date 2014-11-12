@@ -189,27 +189,11 @@ class State:
     def popLanded(self):
         self.landed = self.savedLanded.pop(len(self.savedLanded)-1)
 
-    #FUNKAR INTE ÄN
+    #FUNKAR lINTE N
     def handleCompleteRows(self,dropedShapes):
-        rowLimit = self.findFirstEmptyRow()
-        
-        completeRows = []
-        y = self.height - 1 #Bottom row
-        while y > rowLimit:
-
-            complete_row = True
-            for x in xrange(self.width):
-                if self.landed.get((x,y), None) is None:
-                    complete_row = False
-                    break;
-
-            if complete_row:
-                completeRows.append(y)
-            y -= 1
-
-        #print completeRows
-
-        return [len(completeRows) > 0,self.deleteRows(completeRows, dropedShapes, rowLimit)]
+        firstEmptyRow = state.findFirstEmptyRow()
+        completeRows = state.findCompleteRowsBelow(firstEmptyRow)
+        return [len(completeRows) > 0,self.deleteRows(completeRows, dropedShapes, firstEmptyRow)]
 
     def deleteRows(self, rows, dropedShapes, empty_row=0):
         #delete the completed row
@@ -217,8 +201,7 @@ class State:
             for x in xrange(self.width):
                 self.landed.pop((x,y))
                 for shape in dropedShapes:
-                    block = shape.get((x,y),None)
-                    if block:
+                    if (x,y) in shape.blocks:
                         shape.pop((x,y))
 
             # move all the rows above it down
@@ -229,10 +212,9 @@ class State:
                         block = self.landed.pop((x,ay))
                         self.landed[(x+dx, ay+dy)] = block
                     for shape in dropedShapes:
-                        block = self.blocks.get((x,ay),None)
-                        if block:
+                        if (x,y) in shape.blocks:
                             block = self.landed.pop((x,ay))
-                            shape[(x+dx, ay+dy)] = block
+                            shape.append((x+dx, ay+dy))
         return dropedShapes 
 
 
