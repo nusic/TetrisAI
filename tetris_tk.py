@@ -74,6 +74,12 @@ class State:
         self.width = width
         self.height = height
 
+    """
+    Copy a state
+    """
+    def copy(self):
+        return copy.deepcopy(self)
+
     def setAsLanded(self, blocks):
         """
         Adds the blocks to those in the grid that have already 'landed'
@@ -83,9 +89,8 @@ class State:
 
     def findFirstEmptyRow(self):
         """
-        Returns the row index of the first empty row
+        Returns the row index of the first empty row, starting from bottom
         """
-        empty_row = -1
         for y in xrange(self.height -1, -1, -1):
             row_is_empty = True
             for x in xrange(self.width):
@@ -93,9 +98,9 @@ class State:
                     row_is_empty = False
                     break;
             if row_is_empty:
-                empty_row = y
-                break
-        return empty_row
+                print y
+                return y
+        return -1
 
     def findCompleteRowsBelow(self, rowLimit):
         """
