@@ -114,7 +114,6 @@ class State:
 
             if complete_row:
                 completeRows.append(y)
-            
             y -= 1
         return completeRows
 
@@ -162,17 +161,23 @@ class State:
         radius = 1
         checked = []
         totHeight = 0
+       
+        #deletedRows,dropedShapes2 = self.handleCompleteRows(copy.copy(dropedShapes))
 
+        #if deletedRows:
+        #   print [block.coord() for block in dropedShapes[0].blocks]
+        #   print [block.coord() for block in dropedShapes2[0].blocks]
+        #   print 
         #validate on droped shapes
-        coords = [(block.coord()) for block in currShape.blocks]
-        for i in range(1,len(dropedShapes)):
-            coords += [(block.coord()) for block in dropedShapes[i].blocks]
+        #coords = [(block.coord()) for block in currShape.blocks]
+        #for i in range(1,len(dropedShapes)):
+        #    coords += [(block.coord()) for block in dropedShapes[i].blocks]
         for block in currShape.blocks:
             totHeight += self.height-block.y
             for x in xrange(block.x-1,block.x+2):
                 for y in xrange(block.y,block.y+2):
                     if x in range(0,self.width) and y in range(0,self.height):
-                        if (x,y) not in checked and (x,y) not in coords and (x,y) not in self.landed:
+                        if (x,y) not in checked and (x,y) not in self.landed:
                             holes += 1
                         checked.append((x,y))
 
@@ -183,6 +188,53 @@ class State:
 
     def popLanded(self):
         self.landed = self.savedLanded.pop(len(self.savedLanded)-1)
+
+    #FUNKAR INTE ÄN
+    def handleCompleteRows(self,dropedShapes):
+        rowLimit = self.findFirstEmptyRow()
+        
+        completeRows = []
+        y = self.height - 1 #Bottom row
+        while y > rowLimit:
+
+            complete_row = True
+            for x in xrange(self.width):
+                if self.landed.get((x,y), None) is None:
+                    complete_row = False
+                    break;
+
+            if complete_row:
+                completeRows.append(y)
+            y -= 1
+
+        #print completeRows
+
+        return [len(completeRows) > 0,self.deleteRows(completeRows, dropedShapes, rowLimit)]
+
+    def deleteRows(self, rows, dropedShapes, empty_row=0):
+        #delete the completed row
+        for y in rows:
+            for x in xrange(self.width):
+                self.landed.pop((x,y))
+                for shape in dropedShapes:
+                    block = shape.get((x,y),None)
+                    if block:
+                        shape.pop((x,y))
+
+            # move all the rows above it down
+            for ay in xrange(y-1, empty_row, -1):
+                for x in xrange(self.width):
+                    block = self.landed.get((x,ay), None)
+                    if block:
+                        block = self.landed.pop((x,ay))
+                        self.landed[(x+dx, ay+dy)] = block
+                    for shape in dropedShapes:
+                        block = self.blocks.get((x,ay),None)
+                        if block:
+                            block = self.landed.pop((x,ay))
+                            shape[(x+dx, ay+dy)] = block
+        return dropedShapes 
+
 
 class Board( Frame ):
     """
@@ -565,6 +617,7 @@ class GameController(object):
                         )
                     Toplevel().destroy()
                     self.parent.destroy()
+                    #self.__init__(root)
                     sys.exit(0)
 
                 # do we go up a level?
@@ -686,30 +739,38 @@ class GameController(object):
         if newShape != None:
             if n <= self.numNextShapes:
                 shape = self.create_shape(newShape)
-                for _ in range(10):
-                    self.shape.move(LEFT)
-                self.moveRightReward(shape,dropedShapes,n,reward)
-                self.moveLeftRotate(shape)
-                self.moveRightReward(shape,dropedShapes,n,reward)
-                self.moveLeftRotate(shape)
-                self.moveRightReward(shape,dropedShapes,n,reward)
-                self.moveLeftRotate(shape)
-                self.moveRightReward(shape,dropedShapes,n,reward)
-                self.delShape(shape)
+                if shape != None:
+                    for _ in range(10):
+                        self.shape.move(LEFT)
+                    self.moveRightReward(shape,dropedShapes,n,reward)
+                    self.moveLeftRotate(shape)
+                    self.moveRightReward(shape,dropedShapes,n,reward)
+                    self.moveLeftRotate(shape)
+                    self.moveRightReward(shape,dropedShapes,n,reward)
+                    self.moveLeftRotate(shape)
+                    self.moveRightReward(shape,dropedShapes,n,reward)
+                    self.delShape(shape)
+                else:
+                    self.recursiveMove(newShape,dropedShapes,self.numNextShapes+1,reward)
             else:
                 self.moves += [(reward + self.board.state.reward(dropedShapes), self.shapeCoords(dropedShapes[0]))] 
 
     def moveRightReward(self,shape,dropedShapes,n,reward):
         for _ in range(10):
-            dropedShape = self.dropShape(shape)
-            dropedShapes.append(dropedShape)
-            self.board.state.pushLanded()
-            #reward += self.board.state.reward(dropedShapes)
-            self.recursiveMove(self.nextShapes[n-1],dropedShapes,n+1,reward)
-            shape.move(RIGHT)
-            dropedShapes.pop(len(dropedShapes)-1)
-            self.board.state.popLanded()
-            self.delShape(dropedShape)
+            if shape != None:
+                dropedShape = self.dropShape(shape)
+                dropedShapes.append(dropedShape)
+                self.board.state.pushLanded()
+                #reward += self.board.state.reward(dropedShapes)
+                for dshape in dropedShapes:
+                    if dshape != None:
+                        self.board.state.setAsLanded(dshape.blocks)
+                self.recursiveMove(self.nextShapes[n-1],dropedShapes,n+1,reward)
+                shape.move(RIGHT)
+                dropedShapes.pop(len(dropedShapes)-1)
+                self.board.state.popLanded()
+                if dropedShape != None:
+                    self.delShape(dropedShape)
 
     def moveLeftRotate(self, shape):
         for _ in range(5):
