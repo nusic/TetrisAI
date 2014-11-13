@@ -16,7 +16,7 @@ class SimpleAI:
 		#data to keep track of during algorithm
 		self.state = state.copy()
 
-		#max recursion depth
+		#max recursion depth - currently not used
 		self.maxDepth = maxDepth
 
 
