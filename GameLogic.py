@@ -47,7 +47,6 @@ class State:
     def currentHeight(self):
         return self.height - self.findFirstEmptyRow()
 
-
     def findCompleteRowsBelow(self, rowLimit):
         """
         Scans from bottom row, up until rowLimit, and finds any complete rows. 

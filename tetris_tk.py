@@ -20,12 +20,11 @@ from time import sleep
 from random import randint
 import tkMessageBox
 import sys
-import copy
+import collections
 
 from Globals import *
 import GameLogic
 import AI
-
 
 
 def level_thresholds( first_level, no_of_levels ):
@@ -69,7 +68,6 @@ class Board( Frame ):
         offset (in pixels) = 3
         """
         Frame.__init__(self, parent)
-        
         # blocks are indexed by there corrdinates e.g. (4,5), these are
         self.state = GameLogic.State(max_x, max_y)
 
@@ -327,6 +325,9 @@ class GameController(object):
         self.delay = 1000    #ms
         self.nextShapes = []
         self.numNextShapes = 0
+
+        self.maxRuns = 10
+        self.runs = 0
         
         #lookup table
         self.shapes = [square_shape,
@@ -381,6 +382,8 @@ class GameController(object):
         self.ai = AI.SimpleAI(self.board.state, 1)
 
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
+
+
     
     def updateGhostPiece(self):
         if self.showGhostPiece:
@@ -433,16 +436,27 @@ class GameController(object):
                 # that the check before creating it failed and the
                 # game is over!
                 if self.shape is None:
-                    tkMessageBox.showwarning(
-                        title="GAME OVER",
-                        message ="Score: %7d\tLevel: %d\t" % (
-                            self.score, self.level),
-                        parent=self.parent
-                        )
-                    Toplevel().destroy()
-                    #self.parent.destroy()
-                    #self.__init__(root)
-                    #sys.exit(0)
+                    #END GAME
+                    self.runs += 1
+                    print self.runs,":", "score:", self.score
+
+                    if self.ai == None:
+                        tkMessageBox.showwarning(
+                            title="GAME OVER",
+                            message ="Score: %7d\tLevel: %d\t" % (
+                                self.score, self.level),
+                            parent=self.parent
+                            )
+                        Toplevel().destroy()
+                    elif self.runs < self.maxRuns:
+                        self.board.state.landed.clear()
+                        self.board.canvas.delete(ALL)
+                        self.score = 0
+                        self.level = 0
+                        self.shape = self.create_shape(self.nextShapes.pop(0))
+                        self.nextShapes += self.get_next_shapes(1)
+                    else:
+                        sys.exit(0)
 
                 # do we go up a level?
                 if (self.level < NO_OF_LEVELS and 
@@ -530,7 +544,6 @@ class GameController(object):
 
                 self.shape.setCoords(tetromino.coords)
                 self.handle_move(DOWN)
-                
                 self.after_id = self.parent.after( 0 , self.move_my_shape )
 
             else:
@@ -576,6 +589,8 @@ class GameController(object):
 if __name__ == "__main__":
     root = Tk()
     root.title("Tetris Tk")
+    #root.withdraw()
+
     theGame = GameController( root )
     
     root.mainloop()
