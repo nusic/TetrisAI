@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+HighScore: 35900
+
 Tetris Tk - A tetris clone written in Python using the Tkinter GUI library.
 
 Controls:
@@ -187,8 +189,8 @@ class State:
                         checked.append((x,y))
         deletedRows = 0
         if self.handleCompleteRows(dropedShapes):
-            deletedRows = -10
-        return holes + (totHeight/4) + deletedRows
+            deletedRows = -5
+        return holes + (totHeight/2) + deletedRows
 
     def pushLanded(self):
         self.savedLanded.append(copy.copy(self.landed))
@@ -493,7 +495,7 @@ class GameController(object):
         self.level = 0
         self.delay = 1000    #ms
         self.nextShapes = []
-        self.numNextShapes = 1
+        self.numNextShapes = 0
         self.moves = []
         
         #lookup table
@@ -691,12 +693,14 @@ class GameController(object):
                 self.moves = []
                 self.board.state.pushLanded()
                 self.recursiveMove(self.shape,[],0,0)
-                coords = min(self.moves)[1]
+                (cost, coords) = min(self.moves)
+                print cost
                 self.board.state.popLanded()
 
                 self.shape.setCoords(coords)
                 self.handle_move(DOWN)
                 
+
                 self.after_id = self.parent.after( 0 , self.move_my_shape )
 
             else:

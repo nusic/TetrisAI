@@ -1,0 +1,17 @@
+Todo
+====
+
+1. Test N games within one program run
+2. Refactor AI code to AI class
+3. Gather statistics
+4. Extract features:
+	- wells
+	- global # holes
+5. Prune possibilities?
+6. Optimize
+7. Learn weights
+-----------------------------------
+
+Disable GUI
+Command line options
+Show next piece
