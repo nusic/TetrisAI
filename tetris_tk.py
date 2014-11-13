@@ -531,7 +531,7 @@ class GameController(object):
                 self.shape.setCoords(tetromino.coords)
                 self.handle_move(DOWN)
                 
-                self.after_id = self.parent.after( 100 , self.move_my_shape )
+                self.after_id = self.parent.after( 0 , self.move_my_shape )
 
             else:
                 self.handle_move( DOWN )

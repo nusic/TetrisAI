@@ -56,16 +56,16 @@ class State:
         y = self.height - 1 #Bottom row
         while y > rowLimit:
 
-            complete_row = True
-            for x in xrange(self.width):
-                if self.landed.get((x,y), None) is None:
-                    complete_row = False
-                    break;
-
-            if complete_row:
+            if self.checkRowIsComplete(y):
                 completeRows.append(y)
             y -= 1
         return completeRows
+
+    def checkRowIsComplete(self, y):
+        for x in xrange(self.width):
+            if self.landed.get((x,y), None) is None:
+                return False
+        return True
 
     def addAndGetCompleteRows(self, blocks):
         """
