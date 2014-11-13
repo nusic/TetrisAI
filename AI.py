@@ -14,7 +14,7 @@ class SimpleAI:
 		self.weights = {\
 			"currentHeight" : -1, \
 			"numHoles" : -1, \
-			"linesCleared" : 4} 
+			"linesCleared" : 5}
 
 		#data to keep track of during algorithm
 		self.state = state.copy()
@@ -30,18 +30,25 @@ class SimpleAI:
 	def getNextPieceOrientation(self, state, tetromino):
 		
 		possibleTetrominoes = self.possibleTetrominoes(state, tetromino)
+		worstScore = float("inf")
+		sumScore = 0
 		bestScore = float("-inf")
 		bestTetromino = None
 
 		for tetromino in possibleTetrominoes:
-			#print tetromino.coords
 			succState = state.copy()
 			succState.setCoordsAsLanded(tetromino.coords)
+
 			score = self.evaluate(succState, tetromino)
+			sumScore += score
+			if score < worstScore:
+				worstScore = score
 			if score > bestScore:
 				bestScore = score
 				bestTetromino = tetromino
 
+		#print "scores: [",worstScore,",",bestScore,"]", 
+		#print "\tmean:",sumScore/len(possibleTetrominoes)
 		return bestTetromino
 
 
@@ -100,14 +107,14 @@ class SimpleAI:
 	def extractNumHoles(self, state, tetromino):
 		#center
 		holes = 0
-		x_range = xrange(tetromino.leftMostX()-1, tetromino.rightMostX()+1)
-		y_range = xrange(tetromino.upperMostY(), tetromino.lowerMostY()+1)
+		x_range = xrange(tetromino.leftMostX()-1, tetromino.rightMostX()+2)
+		y_range = xrange(tetromino.upperMostY(), tetromino.lowerMostY()+2)
 		#print tetromino.coords,"--> check holes in", x_range, y_range
 		for x in x_range:
 			for y in y_range:
-
 				#not interested in holes outside play field
 				if x < 0 or x >= state.width or y < 0 or y >= state.height:
+					"hole cannot be outside playing field"
 					continue
 
 				if state.landed.has_key( (x,y) ) == None:
