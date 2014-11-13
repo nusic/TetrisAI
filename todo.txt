@@ -1,17 +1,20 @@
+Done
+====
+Test N games within one program run
+Refactor AI code to AI class
+Disable GUI --> No noticable effect on performance
+
+
 Todo
 ====
-
-1. Test N games within one program run
-2. Refactor AI code to AI class
-3. Gather statistics
-4. Extract features:
+1. Gather statistics
+2. Extract features:
 	- wells
 	- global # holes
-5. Prune possibilities?
-6. Optimize
-7. Learn weights
+3. Prune possibilities?
+4. Optimize
+5. Learn weights
 -----------------------------------
 
-Disable GUI
 Command line options
 Show next piece
