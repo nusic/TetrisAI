@@ -185,8 +185,10 @@ class State:
                         if (x,y) not in checked and (x,y) not in self.landed:
                             holes += 1
                         checked.append((x,y))
-
-        return holes + (totHeight/4)
+        deletedRows = 0
+        if self.handleCompleteRows(dropedShapes):
+            deletedRows = -10
+        return holes + (totHeight/4) + deletedRows
 
     def pushLanded(self):
         self.savedLanded.append(copy.copy(self.landed))
@@ -196,25 +198,9 @@ class State:
 
     #FUNKAR INTE AN
     def handleCompleteRows(self,dropedShapes):
-        rowLimit = self.findFirstEmptyRow()
-        
-        completeRows = []
-        y = self.height - 1 #Bottom row
-        while y > rowLimit:
-
-            complete_row = True
-            for x in xrange(self.width):
-                if self.landed.get((x,y), None) is None:
-                    complete_row = False
-                    break;
-
-            if complete_row:
-                completeRows.append(y)
-            y -= 1
-
-        #print completeRows
-
-        return [len(completeRows) > 0,self.deleteRows(completeRows, dropedShapes, rowLimit)]
+        firstEmptyRow = self.findFirstEmptyRow()
+        completeRows = self.findCompleteRowsBelow(firstEmptyRow)
+        return len(completeRows) > 0
 
     def deleteRows(self, rows, dropedShapes, empty_row=0):
         #delete the completed row
@@ -222,8 +208,7 @@ class State:
             for x in xrange(self.width):
                 self.landed.pop((x,y))
                 for shape in dropedShapes:
-                    block = shape.get((x,y),None)
-                    if block:
+                    if (x,y) in shape.blocks:
                         shape.pop((x,y))
 
             # move all the rows above it down
@@ -234,10 +219,9 @@ class State:
                         block = self.landed.pop((x,ay))
                         self.landed[(x+dx, ay+dy)] = block
                     for shape in dropedShapes:
-                        block = self.blocks.get((x,ay),None)
-                        if block:
+                        if (x,y) in shape.blocks:
                             block = self.landed.pop((x,ay))
-                            shape[(x+dx, ay+dy)] = block
+                            shape.append((x+dx, ay+dy))
         return dropedShapes 
 
 
