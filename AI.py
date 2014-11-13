@@ -59,8 +59,8 @@ class AI:
 
 
 	"""
-	Returns the number of holes in the passed state
+	Returns the height of tetrominoes
 	"""
 	def extractHeight(self, state):
-		
+		return state.height - state.findFirstEmptyRow()
 

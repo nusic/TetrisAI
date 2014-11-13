@@ -99,7 +99,7 @@ class State:
                     row_is_empty = False
                     break;
             if row_is_empty:
-                print y
+                #print y
                 return y
         return -1
 
@@ -194,7 +194,7 @@ class State:
     def popLanded(self):
         self.landed = self.savedLanded.pop(len(self.savedLanded)-1)
 
-    #FUNKAR INTE ÄN
+    #FUNKAR INTE AN
     def handleCompleteRows(self,dropedShapes):
         rowLimit = self.findFirstEmptyRow()
         
@@ -621,9 +621,9 @@ class GameController(object):
                         parent=self.parent
                         )
                     Toplevel().destroy()
-                    self.parent.destroy()
+                    #self.parent.destroy()
                     #self.__init__(root)
-                    sys.exit(0)
+                    #sys.exit(0)
 
                 # do we go up a level?
                 if (self.level < NO_OF_LEVELS and 
@@ -713,7 +713,7 @@ class GameController(object):
                 self.shape.setCoords(coords)
                 self.handle_move(DOWN)
                 
-                self.after_id = self.parent.after( 1 , self.move_my_shape )
+                self.after_id = self.parent.after( 0 , self.move_my_shape )
 
             else:
                 self.handle_move( DOWN )
@@ -767,9 +767,8 @@ class GameController(object):
                 dropedShapes.append(dropedShape)
                 self.board.state.pushLanded()
                 #reward += self.board.state.reward(dropedShapes)
-                for dshape in dropedShapes:
-                    if dshape != None:
-                        self.board.state.setAsLanded(dshape.blocks)
+                
+                self.board.state.setAsLanded(dropedShape.blocks)
                 self.recursiveMove(self.nextShapes[n-1],dropedShapes,n+1,reward)
                 shape.move(RIGHT)
                 dropedShapes.pop(len(dropedShapes)-1)
