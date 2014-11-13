@@ -22,21 +22,11 @@ import tkMessageBox
 import sys
 import copy
 
-#True to use the AI, False to play the game
-AI = True
+from Globals import *
+import GameLogic
+import AI
 
-SCALE = 30
-OFFSET = 3
-MAXX = 10
-MAXY = 22
 
-NO_OF_LEVELS = 10
-
-LEFT = "left"
-RIGHT = "right"
-DOWN = "down"
-
-direction_d = { "left": (-1, 0), "right": (1, 0), "down": (0, 1) }
 
 def level_thresholds( first_level, no_of_levels ):
     """
@@ -66,167 +56,6 @@ class status_bar( Frame ):
         self.label.config(test="")
         self.label.update_idletasks()
 
-class State:
-    """
-    This class is a complete representation of the current game state.
-    """
-
-    def __init__(self, width=10, height=20):
-        self.landed = {}
-        self.width = width
-        self.height = height
-        self.savedLanded = []
-
-    """
-    Copy a state
-    """
-    def copy(self):
-        return copy.deepcopy(self)
-
-    def setAsLanded(self, blocks):
-        """
-        Adds the blocks to those in the grid that have already 'landed'
-        """
-        for block in blocks:
-            self.landed[ block.coord() ] = block.id
-
-    def findFirstEmptyRow(self):
-        """
-        Returns the row index of the first empty row, starting from bottom
-        """
-        for y in xrange(self.height -1, -1, -1):
-            row_is_empty = True
-            for x in xrange(self.width):
-                if self.landed.get((x,y), None):
-                    row_is_empty = False
-                    break;
-            if row_is_empty:
-                #print y
-                return y
-        return -1
-
-    def findCompleteRowsBelow(self, rowLimit):
-        """
-        Scans from bottom row, up until rowLimit, and finds any complete rows. 
-        """
-        completeRows = []
-        y = self.height - 1 #Bottom row
-        while y > rowLimit:
-
-            complete_row = True
-            for x in xrange(self.width):
-                if self.landed.get((x,y), None) is None:
-                    complete_row = False
-                    break;
-
-            if complete_row:
-                completeRows.append(y)
-            y -= 1
-        return completeRows
-
-    def addAndGetCompleteRows(self, blocks):
-        """
-        Adds the blocks and returns a list of rows that now are completed.
-        """
-
-        self.setAsLanded(blocks)
-        empty_row = self.findFirstEmptyRow()
-        return self.findCompleteRowsBelow(empty_row)
-
-    def check_block( self, (x, y), includeRoof=True):
-        """
-        Check if the x, y coordinate can have a block placed there.
-        That is; if there is a 'landed' block there or it is outside the
-        board boundary, then return False, otherwise return true.
-        """
-
-        #if x < 0 or x >= self.width or y < 0 or y >= self.height:
-        if x < 0 or x >= self.width or y >= self.height:
-            return False
-        if includeRoof and y < 0:
-            return False
-
-        elif self.landed.has_key( (x, y) ):
-            return False
-        else:
-            return True
-
-    def output( self ):
-        for y in xrange(self.height):
-            line = []
-            for x in xrange(self.width):
-                if self.landed.get((x,y), None):
-                    line.append("X")
-                else:
-                    line.append(".")
-            print "".join(line)
-
-    def reward(self, dropedShapes):
-        currShape = dropedShapes[0]
-
-        holes = 0
-        radius = 1
-        checked = []
-        totHeight = 0
-       
-        #deletedRows,dropedShapes2 = self.handleCompleteRows(copy.copy(dropedShapes))
-
-        #if deletedRows:
-        #   print [block.coord() for block in dropedShapes[0].blocks]
-        #   print [block.coord() for block in dropedShapes2[0].blocks]
-        #   print 
-        #validate on droped shapes
-        #coords = [(block.coord()) for block in currShape.blocks]
-        #for i in range(1,len(dropedShapes)):
-        #    coords += [(block.coord()) for block in dropedShapes[i].blocks]
-        for block in currShape.blocks:
-            totHeight += self.height-block.y
-            for x in xrange(block.x-1,block.x+2):
-                for y in xrange(block.y,block.y+2):
-                    if x in range(0,self.width) and y in range(0,self.height):
-                        if (x,y) not in checked and (x,y) not in self.landed:
-                            holes += 1
-                        checked.append((x,y))
-        deletedRows = 0
-        if self.handleCompleteRows(dropedShapes):
-            deletedRows = -5
-        return holes + (totHeight/2) + deletedRows
-
-    def pushLanded(self):
-        self.savedLanded.append(copy.copy(self.landed))
-
-    def popLanded(self):
-        self.landed = self.savedLanded.pop(len(self.savedLanded)-1)
-
-    #FUNKAR INTE AN
-    def handleCompleteRows(self,dropedShapes):
-        firstEmptyRow = self.findFirstEmptyRow()
-        completeRows = self.findCompleteRowsBelow(firstEmptyRow)
-        return len(completeRows) > 0
-
-    def deleteRows(self, rows, dropedShapes, empty_row=0):
-        #delete the completed row
-        for y in rows:
-            for x in xrange(self.width):
-                self.landed.pop((x,y))
-                for shape in dropedShapes:
-                    if (x,y) in shape.blocks:
-                        shape.pop((x,y))
-
-            # move all the rows above it down
-            for ay in xrange(y-1, empty_row, -1):
-                for x in xrange(self.width):
-                    block = self.landed.get((x,ay), None)
-                    if block:
-                        block = self.landed.pop((x,ay))
-                        self.landed[(x+dx, ay+dy)] = block
-                    for shape in dropedShapes:
-                        if (x,y) in shape.blocks:
-                            block = self.landed.pop((x,ay))
-                            shape.append((x+dx, ay+dy))
-        return dropedShapes 
-
-
 class Board( Frame ):
     """
     The board represents the tetris playing area. A grid of x by y blocks.
@@ -242,7 +71,7 @@ class Board( Frame ):
         Frame.__init__(self, parent)
         
         # blocks are indexed by there corrdinates e.g. (4,5), these are
-        self.state = State(max_x, max_y)
+        self.state = GameLogic.State(max_x, max_y)
 
         self.parent = parent
         self.scale = scale
@@ -288,13 +117,14 @@ class Block(object):
         
     def coord( self ):
         return (self.x, self.y)
-        
+
+
 class shape(object):
     """
     Shape is the  Base class for the game pieces e.g. square, T, S, Z, L,
     reverse L and I. Shapes are constructed of blocks. 
     """
-    @classmethod        
+    @classmethod
     def check_and_create(cls, board, coords, colour ):
         """
         Check if the blocks that make the shape can be placed in empty coords
@@ -307,7 +137,7 @@ class shape(object):
         
         return cls( board, coords, colour)
             
-    def __init__(self, board, coords, colour ):
+    def __init__(self, board, coords, colour):
         """
         Initialise the shape base.
         """
@@ -481,7 +311,8 @@ class i_shape( shape_limited_rotate ):
     def check_and_create( cls, board ):
         coords =[(4,0),(3,0),(5,0),(6,0)]
         return super(i_shape, cls).check_and_create(board, coords, "blue")
-        
+
+
 class GameController(object):
     """
     Main game loop and receives GUI callback events for keypresses etc...
@@ -496,7 +327,6 @@ class GameController(object):
         self.delay = 1000    #ms
         self.nextShapes = []
         self.numNextShapes = 0
-        self.moves = []
         
         #lookup table
         self.shapes = [square_shape,
@@ -543,14 +373,17 @@ class GameController(object):
         self.nextShapes += self.get_next_shapes(1)
 
         self.ghostPiece = None
+        self.showGhostPiece = False
         self.updateGhostPiece()
 
         #self.board.output()
 
+        self.ai = AI.SimpleAI(self.board.state, 1)
+
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
     
     def updateGhostPiece(self):
-        if not AI:
+        if self.showGhostPiece:
             if self.ghostPiece != None:
                 for block in self.ghostPiece.blocks:
                     self.board.delete_block(block.id)
@@ -689,24 +522,30 @@ class GameController(object):
     def move_my_shape( self ):
         if self.shape:
             
-            if AI:
-                self.moves = []
-                self.board.state.pushLanded()
-                self.recursiveMove(self.shape,[],0,0)
-                (cost, coords) = min(self.moves)
-                print cost
-                self.board.state.popLanded()
+            if self.ai != None:
+                shapeCoords = [ (b.x, b.y) for b in self.shape.blocks ]
+                t = GameLogic.Tetromino(shapeCoords)
 
-                self.shape.setCoords(coords)
+                tetromino = self.ai.getNextPieceOrientation(self.board.state, t)
+
+                self.shape.setCoords(tetromino.coords)
                 self.handle_move(DOWN)
                 
-
-                self.after_id = self.parent.after( 0 , self.move_my_shape )
+                self.after_id = self.parent.after( 100 , self.move_my_shape )
 
             else:
                 self.handle_move( DOWN )
                 self.after_id = self.parent.after( self.delay, self.move_my_shape )
 
+
+    def get_next_shapes( self, num ):
+        """
+        Randomly select which tetrominoe will be used next.
+        """
+        shapes = []
+        for _ in range(num):
+            shapes.append(self.shapes[randint(0,len(self.shapes)-1)])
+        return shapes
 
     def dropShape(self,dropShape):
         dropedShape = shape(self.board, self.shapeCoords(dropShape), "black")
@@ -728,62 +567,9 @@ class GameController(object):
             del block
         del shape
 
-    def recursiveMove(self,newShape,dropedShapes,n,reward):
-        if newShape != None:
-            if n <= self.numNextShapes:
-                shape = self.create_shape(newShape)
-                if shape != None:
-                    for _ in range(10):
-                        self.shape.move(LEFT)
-                    self.moveRightReward(shape,dropedShapes,n,reward)
-                    self.moveLeftRotate(shape)
-                    self.moveRightReward(shape,dropedShapes,n,reward)
-                    self.moveLeftRotate(shape)
-                    self.moveRightReward(shape,dropedShapes,n,reward)
-                    self.moveLeftRotate(shape)
-                    self.moveRightReward(shape,dropedShapes,n,reward)
-                    self.delShape(shape)
-                else:
-                    self.recursiveMove(newShape,dropedShapes,self.numNextShapes+1,reward)
-            else:
-                self.moves += [(reward + self.board.state.reward(dropedShapes), self.shapeCoords(dropedShapes[0]))] 
-
-    def moveRightReward(self,shape,dropedShapes,n,reward):
-        for _ in range(10):
-            if shape != None:
-                dropedShape = self.dropShape(shape)
-                dropedShapes.append(dropedShape)
-                self.board.state.pushLanded()
-                #reward += self.board.state.reward(dropedShapes)
-                
-                self.board.state.setAsLanded(dropedShape.blocks)
-                self.recursiveMove(self.nextShapes[n-1],dropedShapes,n+1,reward)
-                shape.move(RIGHT)
-                dropedShapes.pop(len(dropedShapes)-1)
-                self.board.state.popLanded()
-                if dropedShape != None:
-                    self.delShape(dropedShape)
-
-    def moveLeftRotate(self, shape):
-        for _ in range(5):
-            shape.move(LEFT)
-        shape.rotate(clockwise=True)
-        for _ in range(5):
-            shape.move(LEFT)
-
-    def get_next_shapes( self, num ):
-        """
-        Randomly select which tetrominoe will be used next.
-        """
-        shapes = []
-        for _ in range(num):
-            shapes.append(self.shapes[randint(0,len(self.shapes)-1)])
-        return shapes
-
     def create_shape( self, the_shape):
         shape = the_shape.check_and_create(self.board)
         if shape is not None:
-            shape.move("down")
             shape.move("down")
         return shape
         
