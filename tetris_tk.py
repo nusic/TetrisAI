@@ -16,15 +16,26 @@ Controls:
 #Sebb was here
 #Changed and commited with sublime
 from Tkinter import *
-from time import sleep
 from random import randint
+import time
 import tkMessageBox
 import sys
 import collections
+import numpy
 
 from Globals import *
 import GameLogic
 import AI
+
+scores = []
+times = []
+
+
+def statsStr(samples):
+    return "%0.1f"%min(samples)+"\t"\
+            +"%0.1f"%max(samples)+"\t"\
+            +"%0.1f"%numpy.mean(samples)+"\t"\
+            +"%0.1f"%numpy.std(samples)
 
 
 def level_thresholds( first_level, no_of_levels ):
@@ -324,7 +335,7 @@ class GameController(object):
         self.level = 0
         self.delay = 1000    #ms
         self.nextShapes = []
-        self.numNextShapes = 0
+        self.numNextShapes = 3
 
         self.maxRuns = 10
         self.runs = 0
@@ -367,11 +378,11 @@ class GameController(object):
         self.parent.bind("p", self.pause_callback)
         
         if self.numNextShapes != 0:
-            self.nextShapes += self.get_next_shapes(self.numNextShapes)
+            self.nextShapes += self.get_next_shapes(self.numNextShapes+1)
             self.shape = self.create_shape(self.nextShapes.pop(0))
         else:
             self.shape = self.create_shape(self.get_next_shapes(1)[0])
-        self.nextShapes += self.get_next_shapes(1)
+        #self.nextShapes += self.get_next_shapes(1)
 
         self.ghostPiece = None
         self.showGhostPiece = False
@@ -379,8 +390,8 @@ class GameController(object):
 
         #self.board.output()
 
-        self.ai = AI.SimpleAI(self.board.state, 1)
-
+        self.ai = AI.SimpleAI(self.board.state, 0)
+        self.t0 = time.clock()
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
 
 
@@ -402,6 +413,14 @@ class GameController(object):
                 pass
             
             self.ghostPiece = gp
+
+    def restart(self):
+        self.board.state.landed.clear()
+        self.board.canvas.delete(ALL)
+        self.score = 0
+        self.level = 0
+        self.nextShapes += self.get_next_shapes(1)
+        self.shape = self.create_shape(self.nextShapes.pop(0))
 
     def handle_move(self, direction):
 
@@ -430,15 +449,28 @@ class GameController(object):
 
                 #Delete last shape and get a new one
                 del self.shape
-                self.shape = self.create_shape(self.nextShapes.pop(0))
                 self.nextShapes += self.get_next_shapes(1)
+                self.shape = self.create_shape(self.nextShapes.pop(0))
+                
                 # If the shape returned is None, then this indicates that
                 # that the check before creating it failed and the
                 # game is over!
                 if self.shape is None:
                     #END GAME
                     self.runs += 1
-                    print self.runs,":", "score:", self.score
+                    t = time.clock() - self.t0
+                    self.t0 = time.clock()
+
+                    #print self.runs,":", "score:", self.score, "time:",t
+
+                    scores.append(self.score)
+                    times.append(t)
+
+                    f = open('bestScores', 'r+')
+
+                    f.write(",".join( str(scr) for scr in bestActionScores))
+                    f.close()
+
 
                     if self.ai == None:
                         tkMessageBox.showwarning(
@@ -448,14 +480,16 @@ class GameController(object):
                             parent=self.parent
                             )
                         Toplevel().destroy()
+
                     elif self.runs < self.maxRuns:
-                        self.board.state.landed.clear()
-                        self.board.canvas.delete(ALL)
-                        self.score = 0
-                        self.level = 0
-                        self.shape = self.create_shape(self.nextShapes.pop(0))
-                        self.nextShapes += self.get_next_shapes(1)
+                        self.restart()                        
                     else:
+                        print 
+                        print "\tmin\tmax\tavg\tstd"
+                        print "SCORES:\t",statsStr(scores)
+                        print " TIMES:\t",statsStr(times)
+
+
                         sys.exit(0)
 
                 # do we go up a level?
@@ -533,14 +567,27 @@ class GameController(object):
             type=tkMessageBox.OK)
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
 
+    def getNextTetrominoes(self):
+        tetrominoes = []
+        for shape in self.nextShapes:
+            s = shape.check_and_create(self.board)
+            if s != None:
+                tetrominoes.append(GameLogic.Tetromino( [b.coord() for b in s.blocks] ))
+                self.delShape(s)
+        return tetrominoes
+
     def move_my_shape( self ):
         if self.shape:
             
             if self.ai != None:
                 shapeCoords = [ (b.x, b.y) for b in self.shape.blocks ]
-                t = GameLogic.Tetromino(shapeCoords)
 
+                t = [GameLogic.Tetromino(shapeCoords)]
+                t += self.getNextTetrominoes()
+                
+                #t0 = time.clock()
                 tetromino = self.ai.getNextPieceOrientation(self.board.state, t)
+                #print time.clock()-t0
 
                 self.shape.setCoords(tetromino.coords)
                 self.handle_move(DOWN)

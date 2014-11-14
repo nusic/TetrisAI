@@ -12,3 +12,5 @@ DOWN = "down"
 UP = "up"
 
 direction_d = { "left": (-1, 0), "right": (1, 0), "down": (0, 1), "up": (0, -1) }
+
+bestActionScores = []

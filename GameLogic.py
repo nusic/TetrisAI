@@ -29,6 +29,11 @@ class State:
         for coord in coords:
             self.landed[ coord ] = 1337
 
+    def removeCoords(self, coords):
+        for coord in coords:
+            #self.landed[ coord ] = None
+            del self.landed[ coord ]
+
     def findFirstEmptyRow(self):
         """
         Returns the row index of the first empty row, starting from bottom
