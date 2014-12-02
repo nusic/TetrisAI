@@ -464,13 +464,13 @@ class GameController(object):
 
                     #print self.runs,":", "score:", self.score, "time:",t
 
-                    scores.append(self.score)
-                    times.append(t)
+                    #scores.append(self.score)
+                    #times.append(t)
 
-                    f = open('bestScores', 'r+')
+                    #f = open('bestScores', 'r+')
 
-                    f.write(",".join( str(scr) for scr in bestActionScores))
-                    f.close()
+                    #f.write(",".join( str(scr) for scr in bestActionScores))
+                    #f.close()
 
 
                     if self.ai == None:

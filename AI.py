@@ -33,8 +33,6 @@ class SimpleAI:
 	def getNextPieceOrientation(self, state, tetrominoes):
 		
 		possibleActions = self.possibleActions(state, tetrominoes[0])
-		worstScore = float("inf")
-		sumScore = 0
 		bestScore = float("-inf")
 		bestTetromino = None
 
@@ -48,7 +46,7 @@ class SimpleAI:
 
 		actionAndLocalScore.sort(key=lambda tup: tup[1], reverse = True)  # sorts in place
 
-		for i in xrange(min(10, len(actionAndLocalScore))):
+		for i in xrange(min(5, len(actionAndLocalScore))):
 
 			(action, localScore) = actionAndLocalScore[i]
 			score = localScore
@@ -57,16 +55,11 @@ class SimpleAI:
 				score += self.eval(state, tetrominoes, 1)
 				state.removeCoords(action.coords)
 
-			if score < worstScore:
-				worstScore = score
 			if score > bestScore:
 				bestScore = score
 				bestTetromino = action
 
-		#raise Exception("debug")
-		#print "scores: [",worstScore,",",bestScore,"]", 
-		#print "\tmean:",sumScore/len(possibleActions)
-		bestActionScores.append(bestScore)
+		#bestActionScores.append(bestScore)
 		return bestTetromino
 
 	def eval(self, state, tetrominoes, d):
