@@ -337,7 +337,7 @@ class GameController(object):
         self.nextShapes = []
         self.numNextShapes = 3
 
-        self.maxRuns = 10
+        self.maxRuns = 2
         self.runs = 0
         
         #lookup table
@@ -390,7 +390,8 @@ class GameController(object):
 
         #self.board.output()
 
-        self.ai = AI.SimpleAI(self.board.state, 0)
+        #self.ai = None#AI.SimpleAI(self.board.state, 0)
+        self.ai = AI.SimpleAI(self.board.state, 1)
         self.t0 = time.clock()
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
 

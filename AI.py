@@ -1,5 +1,6 @@
 import copy
 import time
+from collections import Counter
 
 from Globals import *
 
@@ -14,12 +15,12 @@ class SimpleAI:
 	def __init__(self, state, maxDepth):
 
 		#A set of weights for the features
-		self.weights = {\
-			"tetrominoY" : 0.3, \
-			"numHoles" : -1, \
-			"linesCleared" : 5, \
-			"aggregateHeight" : -1,\
-			"bumpiness" : -0.3}
+		self.weights = {
+			"tetrominoY" : 0.1, \
+			"numHoles" : -0.46, 
+			"linesCleared" : 1, 
+			"aggregateHeight" : -0.66,
+			"bumpiness" : -0.24}
 
 		#max recursion depth - currently not used
 		self.maxDepth = maxDepth
@@ -37,29 +38,30 @@ class SimpleAI:
 		bestScore = float("-inf")
 		bestTetromino = None
 
-		possibleActions
-		for pos in possibleActions:
-			#succState = state.copy()
-			addedCoords = pos.coords
-			state.setCoordsAsLanded(pos.coords)
+		actionAndLocalScore = []
+		for action in possibleActions:
 
-			#print pos
-			#state.output()
-			#print
+			state.setCoordsAsLanded(action.coords)
+			localScore = self.localEval(state, action)
+			actionAndLocalScore.append( (action, localScore) )
+			state.removeCoords(action.coords)
 
-			score = self.localEval(state, pos)
+		actionAndLocalScore.sort(key=lambda tup: tup[1], reverse = True)  # sorts in place
+
+		for i in xrange(min(10, len(actionAndLocalScore))):
+
+			(action, localScore) = actionAndLocalScore[i]
+			score = localScore
 			if len(tetrominoes) > 1 and self.maxDepth > 0:
-				score += self.eval(state, tetrominoes, 0, 1)
-			sumScore += score
+				state.setCoordsAsLanded(action.coords)
+				score += self.eval(state, tetrominoes, 1)
+				state.removeCoords(action.coords)
+
 			if score < worstScore:
 				worstScore = score
 			if score > bestScore:
 				bestScore = score
-				bestTetromino = pos
-
-			state.removeCoords(addedCoords)
-			#print score
-			#print
+				bestTetromino = action
 
 		#raise Exception("debug")
 		#print "scores: [",worstScore,",",bestScore,"]", 
@@ -67,23 +69,33 @@ class SimpleAI:
 		bestActionScores.append(bestScore)
 		return bestTetromino
 
-	def eval(self, state, tetrominoes, score, d):
-
+	def eval(self, state, tetrominoes, d):
 		#Base case / leaf node
 		maxScore = float("-inf")
 		actions = self.possibleActions(state, tetrominoes[d])
-		for actions in actions:
+		actionAndLocalScore = []
+		for action in actions:
+			
 
-			addedCoords = list(actions.coords)
-			state.setCoordsAsLanded(actions.coords)
+			#addedCoords = list(action.coords)
+			state.setCoordsAsLanded(action.coords)
+			
+			localScore = self.localEval(state, action)
 
-			futureScore = self.localEval(state, actions)
-
-			if d < self.maxDepth and d < len(tetrominoes):
-				futureScore += self.eval(state, tetrominoes, futureScore, d+1)
+			actionAndLocalScore.append( (action, localScore) )
 				
-			maxScore = max( maxScore, score + futureScore)
-			state.removeCoords(addedCoords)
+			state.removeCoords(action.coords)
+		#raise Exception("ASD")
+		actionAndLocalScore.sort(key=lambda tup: tup[1], reverse = True)  # sorts in place
+
+		for i in xrange(min(3, len(actionAndLocalScore))):
+			(action, localScore) = actionAndLocalScore[i]
+
+			state.setCoordsAsLanded(action.coords)
+			if d < self.maxDepth and d < len(tetrominoes):
+				localScore += self.eval(state, tetrominoes, d+1)
+			state.removeCoords(action.coords)
+			maxScore = max( maxScore, 100*d + localScore)
 
 		return maxScore
 
@@ -95,28 +107,43 @@ class SimpleAI:
 
 		choices = []
 		t = tetromino.copy()
-		checked = []
+		checked = Counter()
 		for rot in range(4):
-
-			for coord in t.coords:
-				if coord not in checked:
-					continue
-
-			checked.append(list(t.coords))
-
 			t.rotate()
 			self.moveTetrominoToLeftWall(t)
+			self.moveTetrominoToRoof(t)
 			right = t.rightMostX()
 
+
+			#Checking if already has tested this rotation
+			#if there is a coordinate that haven't seen before
+			#eg. it is not in checked, we have to explore this rotation
+			alreadyTested = True
+			for coord in t.coords:
+				if checked[coord] == 0:
+					alreadyTested = False
+					break
+			if alreadyTested:
+				continue
+
+			for coord in t.coords:
+				checked[coord] += 1
+
+
+			#Drop the piece at all possible x locations
 			while right <= state.width:
 
 				if state.check_tetromino(t):
 					dropped = t.copy()
+
 					dropped.hardDrop(state)
 					choices.append(dropped)
 
 				right += 1
 				t.move(RIGHT)
+		#for choice in choices:
+			#print choice.coords
+		#raise Exception("possible actions")
 		return choices
 
 
@@ -195,5 +222,7 @@ class SimpleAI:
 	def moveTetrominoToLeftWall(self, tetromino):
 		tetromino.skip(LEFT, tetromino.leftMostX())
 
+	def moveTetrominoToRoof(self, tetromino):
+		tetromino.skip(UP, tetromino.upperMostY())
 
 
