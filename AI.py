@@ -44,7 +44,6 @@ class SimpleAI:
 		#If only one known tetromino or if max recursion depth
 		#is 0, just return the best action based on local score
 		if len(tetrominoes) == 1 or self.maxDepth == 0:
-			print "states explored:", self.statesExplored
 			return actionsAndLocalScores[0][0]
 
 
