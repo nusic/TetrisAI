@@ -390,7 +390,7 @@ class GameController(object):
         self.showGhostPiece = False
         self.updateGhostPiece()
 
-        self.numNextShapes = 2
+        self.numNextShapes = 0
         self.maxRuns = 10
         self.runs = 0
         self.userPickShape = False
@@ -507,7 +507,7 @@ class GameController(object):
                         print "\tmin\tmax\tavg\tstd"
                         print "SCORES:\t",statsStr(scores)
                         print " TIMES:\t",statsStr(times)
-
+                        print "AVG SCORE / AVG TIME: ", numpy.mean(scores)/numpy.mean(times)
 
                         sys.exit(0)
 

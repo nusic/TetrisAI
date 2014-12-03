@@ -76,6 +76,19 @@ class SimpleAI:
 
 
 
+	def actionsAndLocalScoresSorted(self, state, tetromino):
+		actionAndLocalScore = []
+		possibleActions = self.possibleActions(state, tetromino)
+		for action in possibleActions:
+			localScore = self.localEvalWithClearedLinesRemoved(state, action)
+
+			actionAndLocalScore.append( (action, localScore) )
+		# sorts in place
+		actionAndLocalScore.sort(key=lambda tup: tup[1], reverse = True) 
+		return actionAndLocalScore
+
+
+
 	def eval(self, state, tetrominoes, d):
 		bestScore = float("-inf")
 		actionsAndLocalScores = self.actionsAndLocalScoresSorted(state, tetrominoes[d])
@@ -90,6 +103,7 @@ class SimpleAI:
 			bestScore = max( bestScore, 5*d + localScore)
 
 		return bestScore
+
 
 
 	def evalWithClearedLinesRemoved(self, state, tetrominoes, d):
@@ -121,16 +135,7 @@ class SimpleAI:
 		return bestScore
 
 
-	def actionsAndLocalScoresSorted(self, state, tetromino):
-		actionAndLocalScore = []
-		possibleActions = self.possibleActions(state, tetromino)
-		for action in possibleActions:
-			localScore = self.localEvalWithClearedLinesRemoved(state, action)
 
-			actionAndLocalScore.append( (action, localScore) )
-		# sorts in place
-		actionAndLocalScore.sort(key=lambda tup: tup[1], reverse = True) 
-		return actionAndLocalScore
 
 
 	def localEvalWithClearedLinesRemoved(self, state, action):
