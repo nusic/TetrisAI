@@ -57,6 +57,21 @@ SCORES:	64600.0	476800	313420	139021.2
 
 
 
+-------STATS-------
+Weights:
+	"tetrominoY" : 0.1, 
+	"numHoles" : -0.46, 
+	"linesCleared" : 1, 
+	"aggregateHeight" : -0.66,
+	"bumpiness" : -0.24
+
+runs: 10
+lookahead: 1
+beam search: k = 4, k-recursive = 2 
 
 
+		min		max		avg		std
+SCORES:	181600	860600	447760	232801.9
+ TIMES:	599.4	2910.1	1497.9	792.1
+AVG SCORE / AVG TIME:  298.933839796
 
