@@ -159,40 +159,31 @@ class State:
                     line.append(".")
             print "".join(line)
 
-    #FUNKAR INTE AN
-    def handleCompleteRows(self,dropedShapes):
-        firstEmptyRow = self.findFirstEmptyRow()
-        completeRows = self.findCompleteRowsBelow(firstEmptyRow)
-        return len(completeRows) > 0
 
-    def deleteRows(self, rows, dropedShapes, empty_row=0):
+
+    def deleteRows(self, rows, empty_row=0):
         #delete the completed row
         for y in rows:
             for x in xrange(self.width):
                 self.landed.pop((x,y))
-                for shape in dropedShapes:
-                    if (x,y) in shape.blocks:
-                        shape.pop((x,y))
 
             # move all the rows above it down
             for ay in xrange(y-1, empty_row, -1):
                 for x in xrange(self.width):
                     block = self.landed.get((x,ay), None)
                     if block:
+                        dx,dy = direction_d[DOWN]
                         block = self.landed.pop((x,ay))
                         self.landed[(x+dx, ay+dy)] = block
-                    for shape in dropedShapes:
-                        if (x,y) in shape.blocks:
-                            block = self.landed.pop((x,ay))
-                            shape.append((x+dx, ay+dy))
-        return dropedShapes
+
 
 """
 Class for handling non GUI parts of tetrominoes
 """
 class Tetromino:
-    def __init__(self, coords):
+    def __init__(self, coords, rots = -1):
         self.coords = coords
+        self.rots = rots
 
     def copy(self):
         return copy.deepcopy(self)

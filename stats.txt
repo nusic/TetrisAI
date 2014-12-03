@@ -1,0 +1,52 @@
+-------STATS-------
+Weights:
+	"tetrominoY" : 0.1, 
+	"numHoles" : -0.46, 
+	"linesCleared" : 1, 
+	"aggregateHeight" : -0.66,
+	"bumpiness" : -0.24
+
+runs: 10
+lookahead: 0
+
+#1
+		min		max		avg		std
+SCORES:	11000.0	39100.0	23150.0	9215.8
+ TIMES:	2.4		9.5		5.9		2.3
+
+#2
+		min		max		avg		std
+SCORES:	3500.0	176100	57460.0	50888.7
+ TIMES:	1.0		52.7	17.2	15.0
+
+#3 - eval with linesCleared
+ 		min		max		avg		std
+SCORES:	5300.0	136000	56570.0	41511.6
+ TIMES:	2.4		42.1	18.4	12.7
+--------------------
+
+
+
+-------STATS-------
+Weights:
+	"tetrominoY" : 0.1, 
+	"numHoles" : -0.46, 
+	"linesCleared" : 1, 
+	"aggregateHeight" : -0.66,
+	"bumpiness" : -0.24
+
+runs: 10
+lookahead: 1
+beam search: k=8 
+
+		min		max		avg		std
+SCORES:	64600.0	476800	313420	139021.2
+ TIMES:	98.4	790.1	531.5	234.1
+		
+--------------------
+
+
+
+
+
+

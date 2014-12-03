@@ -134,7 +134,7 @@ class shape(object):
     reverse L and I. Shapes are constructed of blocks. 
     """
     @classmethod
-    def check_and_create(cls, board, coords, colour ):
+    def check_and_create(cls, board, coords, colour, rots):
         """
         Check if the blocks that make the shape can be placed in empty coords
         before creating and returning the shape instance. Otherwise, return
@@ -144,14 +144,15 @@ class shape(object):
             if not board.state.check_block( coord ):
                 return None
         
-        return cls( board, coords, colour)
+        return cls( board, coords, colour, rots)
             
-    def __init__(self, board, coords, colour):
+    def __init__(self, board, coords, colour, rots):
         """
         Initialise the shape base.
         """
         self.board = board
         self.blocks = []
+        self.rots = rots
         
         for coord in coords:
             block = Block(self.board.add_block( coord, colour), coord)
@@ -251,9 +252,9 @@ class shape_limited_rotate( shape ):
     Instead they toggle between 90 degrees clockwise and then back 90 degrees
     anti-clockwise.
     """
-    def __init__( self, board, coords, colour ):
+    def __init__( self, board, coords, colour, rots ):
         self.clockwise = True
-        super(shape_limited_rotate, self).__init__(board, coords, colour)
+        super(shape_limited_rotate, self).__init__(board, coords, colour, rots)
     
     def rotate(self, clockwise=True):
         """
@@ -271,7 +272,8 @@ class square_shape( shape ):
     @classmethod
     def check_and_create( cls, board ):
         coords = [(4,0),(5,0),(4,1),(5,1)]
-        return super(square_shape, cls).check_and_create(board, coords, "red")
+        rots = []
+        return super(square_shape, cls).check_and_create(board, coords, "red", rots)
         
     def rotate(self, clockwise=True):
         """
@@ -283,13 +285,15 @@ class t_shape( shape ):
     @classmethod
     def check_and_create( cls, board ):
         coords = [(4,0),(3,0),(5,0),(4,1)]
-        return super(t_shape, cls).check_and_create(board, coords, "yellow" )
+        rots = [1, 1, 1]
+        return super(t_shape, cls).check_and_create(board, coords, "yellow" , rots)
         
 class l_shape( shape ):
     @classmethod
     def check_and_create( cls, board ):
         coords = [(4,0),(3,0),(5,0),(3,1)]
-        return super(l_shape, cls).check_and_create(board, coords, "orange")
+        rots = [1, 1, 1]
+        return super(l_shape, cls).check_and_create(board, coords, "orange", rots)
     
 
         #  0 1 2 3 4 5 6
@@ -300,26 +304,30 @@ class reverse_l_shape( shape ):
     @classmethod
     def check_and_create( cls, board ):
         coords = [(5,0),(4,0),(6,0),(6,1)]
+        rots = [1, 1, 1]
         return super(reverse_l_shape, cls).check_and_create(
-            board, coords, "green")
+            board, coords, "green", rots)
 
 class z_shape( shape_limited_rotate ):
     @classmethod
     def check_and_create( cls, board ):
         coords =[(5,0),(4,0),(5,1),(6,1)]
-        return super(z_shape, cls).check_and_create(board, coords, "purple")
+        rots = [1]
+        return super(z_shape, cls).check_and_create(board, coords, "purple", rots)
         
 class s_shape( shape_limited_rotate ):
     @classmethod
     def check_and_create( cls, board ):
         coords =[(5,1),(4,1),(5,0),(6,0)]
-        return super(s_shape, cls).check_and_create(board, coords, "magenta")
+        rots = [1]
+        return super(s_shape, cls).check_and_create(board, coords, "magenta", rots)
         
 class i_shape( shape_limited_rotate ):
     @classmethod
     def check_and_create( cls, board ):
         coords =[(4,0),(3,0),(5,0),(6,0)]
-        return super(i_shape, cls).check_and_create(board, coords, "blue")
+        rots = [1]
+        return super(i_shape, cls).check_and_create(board, coords, "blue", rots)
 
 
 class GameController(object):
@@ -335,10 +343,9 @@ class GameController(object):
         self.level = 0
         self.delay = 1000    #ms
         self.nextShapes = []
-        self.numNextShapes = 3
+        
 
-        self.maxRuns = 2
-        self.runs = 0
+        
         
         #lookup table
         self.shapes = [square_shape,
@@ -377,25 +384,29 @@ class GameController(object):
         #self.parent.bind("s", self.rot_anticlockwise_callback)
         self.parent.bind("p", self.pause_callback)
         
-        if self.numNextShapes != 0:
-            self.nextShapes += self.get_next_shapes(self.numNextShapes+1)
-            self.shape = self.create_shape(self.nextShapes.pop(0))
-        else:
-            self.shape = self.create_shape(self.get_next_shapes(1)[0])
-        #self.nextShapes += self.get_next_shapes(1)
 
         self.ghostPiece = None
         self.showGhostPiece = False
         self.updateGhostPiece()
 
-        #self.board.output()
+        self.numNextShapes = 1
+        self.maxRuns = 10
+        self.runs = 0
+        self.userPickShape = False
 
-        #self.ai = None#AI.SimpleAI(self.board.state, 0)
-        self.ai = AI.SimpleAI(self.board.state, 1)
+        if self.userPickShape:
+            self.shape = self.create_shape(shapeFromInput())
+        else:
+            if self.numNextShapes != 0:
+                self.nextShapes += self.get_next_shapes(self.numNextShapes+1)
+                self.shape = self.create_shape(self.nextShapes.pop(0))
+            else:
+                self.shape = self.create_shape(self.get_next_shapes(1)[0])
+            #self.nextShapes += self.get_next_shapes(1)
+
+        self.ai = AI.SimpleAI(self.board.state, self.numNextShapes)
         self.t0 = time.clock()
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
-
-
     
     def updateGhostPiece(self):
         if self.showGhostPiece:
@@ -439,6 +450,8 @@ class GameController(object):
                 #Set the current shape as "landed"
                 state.setAsLanded(self.shape.blocks)
 
+                #print "shape rots:", self.shape.rots
+
                 #Find the first empty row. One could call this the "tetris-height".
                 #Find all complete rows below first empty row, and remove them
                 firstEmptyRow = state.findFirstEmptyRow()
@@ -451,7 +464,11 @@ class GameController(object):
                 #Delete last shape and get a new one
                 del self.shape
                 self.nextShapes += self.get_next_shapes(1)
-                self.shape = self.create_shape(self.nextShapes.pop(0))
+                if self.userPickShape:
+                    self.shape = self.create_shape(shapeFromInput())
+                else:
+                    self.shape = self.create_shape(self.nextShapes.pop(0))
+                
                 
                 # If the shape returned is None, then this indicates that
                 # that the check before creating it failed and the
@@ -462,10 +479,10 @@ class GameController(object):
                     t = time.clock() - self.t0
                     self.t0 = time.clock()
 
-                    #print self.runs,":", "score:", self.score, "time:",t
+                    print self.runs,":", "score:", self.score, "time:",t
 
-                    #scores.append(self.score)
-                    #times.append(t)
+                    scores.append(self.score)
+                    times.append(t)
 
                     #f = open('bestScores', 'r+')
 
@@ -573,7 +590,7 @@ class GameController(object):
         for shape in self.nextShapes:
             s = shape.check_and_create(self.board)
             if s != None:
-                tetrominoes.append(GameLogic.Tetromino( [b.coord() for b in s.blocks] ))
+                tetrominoes.append(GameLogic.Tetromino( [b.coord() for b in s.blocks] , s.rots))
                 self.delShape(s)
         return tetrominoes
 
@@ -583,7 +600,7 @@ class GameController(object):
             if self.ai != None:
                 shapeCoords = [ (b.x, b.y) for b in self.shape.blocks ]
 
-                t = [GameLogic.Tetromino(shapeCoords)]
+                t = [GameLogic.Tetromino(shapeCoords, self.shape.rots)]
                 t += self.getNextTetrominoes()
                 
                 #t0 = time.clock()
@@ -633,6 +650,18 @@ class GameController(object):
         if shape is not None:
             shape.move("down")
         return shape
+
+def shapeFromInput():
+    while True:
+        s = raw_input("Enter shape [ O, T, L, J, Z, S, I ]: ").upper()
+        if s == "O": return square_shape
+        if s == "T": return t_shape
+        if s == "L": return l_shape
+        if s == "J": return reverse_l_shape
+        if s == "Z": return z_shape
+        if s == "S": return s_shape
+        if s == "I": return i_shape
+        print "invalid shape"
         
 if __name__ == "__main__":
     root = Tk()
