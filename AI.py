@@ -44,11 +44,12 @@ class SimpleAI:
 		#If only one known tetromino or if max recursion depth
 		#is 0, just return the best action based on local score
 		if len(tetrominoes) == 1 or self.maxDepth == 0:
+			#print "states explored:", self.statesExplored
 			return actionsAndLocalScores[0][0]
 
 
 		#Else, recursevely evaluate each successor state
-		for i in xrange(min(5, len(actionsAndLocalScores))):
+		for i in xrange(min(4, len(actionsAndLocalScores))):
 			action, score = actionsAndLocalScores[i]
 			
 			state.setCoordsAsLanded(action.coords)
@@ -70,7 +71,7 @@ class SimpleAI:
 				bestTetromino = action
 
 		#bestActionScores.append(bestScore)
-		print "states explored:", self.statesExplored
+		#print "states explored:", self.statesExplored
 		return bestTetromino
 
 
@@ -92,14 +93,14 @@ class SimpleAI:
 		bestScore = float("-inf")
 		actionsAndLocalScores = self.actionsAndLocalScoresSorted(state, tetrominoes[d])
 		
-		for i in xrange(min(3, len(actionsAndLocalScores))):
+		for i in xrange(min(2, len(actionsAndLocalScores))):
 			action, localScore = actionsAndLocalScores[i]
 
 			if d < self.maxDepth and d < len(tetrominoes):
 				state.setCoordsAsLanded(action.coords)
 				localScore += self.eval(state, tetrominoes, d+1)
 				state.removeCoords(action.coords)
-			bestScore = max( bestScore, 5*d + localScore)
+			bestScore = max( bestScore, localScore)
 
 		return bestScore
 
@@ -107,13 +108,16 @@ class SimpleAI:
 
 	def evalWithClearedLinesRemoved(self, state, tetrominoes, d):
 		actionsAndLocalScores = self.actionsAndLocalScoresSorted(state, tetrominoes[d])
+
 		#Base case - leaf node of max depth
 		if d >= self.maxDepth or d >= len(tetrominoes):
+			if not actionsAndLocalScores:
+				return 0
 			return actionsAndLocalScores[0][1]
 
 
 		bestScore = float("-inf")
-		for i in xrange(min(3, len(actionsAndLocalScores))):
+		for i in xrange(min(2, len(actionsAndLocalScores))):
 			action, localScore = actionsAndLocalScores[i]
 			state.setCoordsAsLanded(action.coords)
 			linesCleared = self.extractLinesCleared(state, GameLogic.Tetromino(action.coords))
@@ -129,7 +133,7 @@ class SimpleAI:
 
 			state.removeCoords(action.coords)
 
-			bestScore = max( bestScore, 5*d + localScore)
+			bestScore = max( bestScore, localScore)
 
 		return bestScore
 
