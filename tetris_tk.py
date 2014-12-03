@@ -354,7 +354,8 @@ class GameController(object):
                       reverse_l_shape,
                       z_shape,
                       s_shape,
-                      i_shape ]
+                      i_shape 
+                      ]
         
         self.thresholds = level_thresholds( 500, NO_OF_LEVELS )
         
@@ -389,7 +390,7 @@ class GameController(object):
         self.showGhostPiece = False
         self.updateGhostPiece()
 
-        self.numNextShapes = 1
+        self.numNextShapes = 2
         self.maxRuns = 10
         self.runs = 0
         self.userPickShape = False

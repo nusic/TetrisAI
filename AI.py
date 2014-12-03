@@ -25,6 +25,7 @@ class SimpleAI:
 
 		#max recursion depth - currently not used
 		self.maxDepth = maxDepth
+		self.statesExplored = 0
 
 
 	"""
@@ -33,7 +34,7 @@ class SimpleAI:
 	"""
 	##clearedLines = self.extractLinesCleared(state, GameLogic.Tetromino(action.coords))
 	def getNextPieceOrientation(self, state, tetrominoes):
-
+		self.statesExplored = 0
 		bestScore = float("-inf")
 		bestTetromino = None
 
@@ -43,11 +44,12 @@ class SimpleAI:
 		#If only one known tetromino or if max recursion depth
 		#is 0, just return the best action based on local score
 		if len(tetrominoes) == 1 or self.maxDepth == 0:
+			print "states explored:", self.statesExplored
 			return actionsAndLocalScores[0][0]
 
 
 		#Else, recursevely evaluate each successor state
-		for i in xrange(min(8, len(actionsAndLocalScores))):
+		for i in xrange(min(5, len(actionsAndLocalScores))):
 			action, score = actionsAndLocalScores[i]
 			
 			state.setCoordsAsLanded(action.coords)
@@ -57,10 +59,10 @@ class SimpleAI:
 			if linesCleared:
 				tmpState = state.copy()
 				tmpState.deleteRows(linesCleared)
-				score += self.evalWithClearedLinesRemoved(tmpState, tetrominoes, self.maxDepth)
+				score += self.evalWithClearedLinesRemoved(tmpState, tetrominoes, 0)
 				del tmpState
 			else:
-				score += self.evalWithClearedLinesRemoved(state, tetrominoes, self.maxDepth)
+				score += self.evalWithClearedLinesRemoved(state, tetrominoes, 0)
 
 			state.removeCoords(action.coords)
 
@@ -69,6 +71,7 @@ class SimpleAI:
 				bestTetromino = action
 
 		#bestActionScores.append(bestScore)
+		print "states explored:", self.statesExplored
 		return bestTetromino
 
 
@@ -77,7 +80,7 @@ class SimpleAI:
 		bestScore = float("-inf")
 		actionsAndLocalScores = self.actionsAndLocalScoresSorted(state, tetrominoes[d])
 		
-		for i in xrange(min(4, len(actionsAndLocalScores))):
+		for i in xrange(min(3, len(actionsAndLocalScores))):
 			action, localScore = actionsAndLocalScores[i]
 
 			if d < self.maxDepth and d < len(tetrominoes):
@@ -91,16 +94,15 @@ class SimpleAI:
 
 	def evalWithClearedLinesRemoved(self, state, tetrominoes, d):
 		actionsAndLocalScores = self.actionsAndLocalScoresSorted(state, tetrominoes[d])
-
 		#Base case - leaf node of max depth
 		if d >= self.maxDepth or d >= len(tetrominoes):
 			return actionsAndLocalScores[0][1]
 
 
 		bestScore = float("-inf")
-		for i in xrange(min(4, len(actionsAndLocalScores))):
+		for i in xrange(min(3, len(actionsAndLocalScores))):
 			action, localScore = actionsAndLocalScores[i]
-
+			state.setCoordsAsLanded(action.coords)
 			linesCleared = self.extractLinesCleared(state, GameLogic.Tetromino(action.coords))
 			localScore = self.weights["linesCleared"]*len(linesCleared)
 
@@ -117,6 +119,18 @@ class SimpleAI:
 			bestScore = max( bestScore, 5*d + localScore)
 
 		return bestScore
+
+
+	def actionsAndLocalScoresSorted(self, state, tetromino):
+		actionAndLocalScore = []
+		possibleActions = self.possibleActions(state, tetromino)
+		for action in possibleActions:
+			localScore = self.localEvalWithClearedLinesRemoved(state, action)
+
+			actionAndLocalScore.append( (action, localScore) )
+		# sorts in place
+		actionAndLocalScore.sort(key=lambda tup: tup[1], reverse = True) 
+		return actionAndLocalScore
 
 
 	def localEvalWithClearedLinesRemoved(self, state, action):
@@ -137,16 +151,7 @@ class SimpleAI:
 
 		return localScore
 
-	def actionsAndLocalScoresSorted(self, state, tetromino):
-		actionAndLocalScore = []
-		possibleActions = self.possibleActions(state, tetromino)
-		for action in possibleActions:
-			localScore = self.localEvalWithClearedLinesRemoved(state, action)
 
-			actionAndLocalScore.append( (action, localScore) )
-		# sorts in place
-		actionAndLocalScore.sort(key=lambda tup: tup[1], reverse = True) 
-		return actionAndLocalScore
 
 
 	"""
@@ -197,6 +202,7 @@ class SimpleAI:
 	Evaluates the passed state based on the weights
 	"""
 	def localEval(self, state, tetromino):
+		self.statesExplored += 1
 		f = self.extractFeatures(state, tetromino)
 		s = 0
 		for w in self.weights:
