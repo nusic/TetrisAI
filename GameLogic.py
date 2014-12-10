@@ -237,3 +237,16 @@ class Tetromino:
         #for i in range(self.leftMostX(), self.rightMostX()):
 
 
+
+
+Tetrominoes = []
+Tetrominoes.append( Tetromino([(4,0),(5,0),(4,1),(5,1)] , [] ) ) # square
+Tetrominoes.append( Tetromino([(4,0),(3,0),(5,0),(4,1)] , [1, 1, 1] ) ) # T
+Tetrominoes.append( Tetromino([(4,0),(3,0),(5,0),(3,1)] , [1, 1, 1] ) ) # L
+Tetrominoes.append( Tetromino([(5,0),(4,0),(6,0),(6,1)] , [1, 1, 1] ) ) # J
+Tetrominoes.append( Tetromino([(5,0),(4,0),(5,1),(6,1)] , [1] ) ) # Z
+Tetrominoes.append( Tetromino([(5,1),(4,1),(5,0),(6,0)] , [1] ) ) # S
+Tetrominoes.append( Tetromino([(4,0),(3,0),(5,0),(6,0)] , [1] ) ) # I
+
+
+

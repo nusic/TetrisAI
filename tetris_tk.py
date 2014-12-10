@@ -348,13 +348,14 @@ class GameController(object):
         
         
         #lookup table
-        self.shapes = [square_shape,
-                      t_shape,
-                      l_shape,
-                      reverse_l_shape,
-                      z_shape,
-                      s_shape,
-                      i_shape 
+        self.shapes = [
+                    square_shape,
+                    t_shape,
+                    l_shape,
+                    reverse_l_shape,
+                    z_shape,
+                    s_shape,
+                    i_shape 
                       ]
         
         self.thresholds = level_thresholds( 500, NO_OF_LEVELS )
@@ -498,10 +499,11 @@ class GameController(object):
                                 self.score, self.level),
                             parent=self.parent
                             )
-                        Toplevel().destroy()
+                        self.restart()
+                        #Toplevel().destroy()
 
                     elif self.runs < self.maxRuns:
-                        self.restart()                        
+                        self.restart()
                     else:
                         print 
                         print "\tmin\tmax\tavg\tstd"

@@ -6,7 +6,6 @@ from collections import Counter
 from Globals import *
 
 
-
 """
 	CS221 Project
 	Class encapsulating all behavior of the tetris AI
@@ -26,14 +25,20 @@ class SimpleAI:
 		#max recursion depth - currently not used
 		self.maxDepth = maxDepth
 		self.statesExplored = 0
+		self.minimax = True
 
 
 	"""
 	Given the sequence of all next known pieces, 
 	return the best piece orientation for the current pieces
 	"""
-	##clearedLines = self.extractLinesCleared(state, GameLogic.Tetromino(action.coords))
 	def getNextPieceOrientation(self, state, tetrominoes):
+
+		return self.evalWithClearedLinesRemoved(state, tetrominoes, 0)[0]
+
+		print "-"*30
+		self.minimaxOneDepth(state)
+
 		self.statesExplored = 0
 		bestScore = float("-inf")
 		bestTetromino = None
@@ -110,32 +115,41 @@ class SimpleAI:
 		actionsAndLocalScores = self.actionsAndLocalScoresSorted(state, tetrominoes[d])
 
 		#Base case - leaf node of max depth
-		if d >= self.maxDepth or d >= len(tetrominoes):
-			if not actionsAndLocalScores:
-				return 0
-			return actionsAndLocalScores[0][1]
+		#if d >= self.maxDepth or d >= len(tetrominoes):
+			#if not actionsAndLocalScores:
+			#	return 0
+			#return actionsAndLocalScores[0][1]
 
 
 		bestScore = float("-inf")
+		bestAction = None
 		for i in xrange(min(2, len(actionsAndLocalScores))):
-			action, localScore = actionsAndLocalScores[i]
+			action, score = actionsAndLocalScores[i]
 			state.setCoordsAsLanded(action.coords)
 			linesCleared = self.extractLinesCleared(state, GameLogic.Tetromino(action.coords))
-			localScore = self.weights["linesCleared"]*len(linesCleared)
+			score = self.weights["linesCleared"]*len(linesCleared)
 
-			if linesCleared:
-				tmpState = state.copy()
-				tmpState.deleteRows(linesCleared)
-				localScore += self.evalWithClearedLinesRemoved(tmpState, tetrominoes, d+1)
-				del tmpState
+			#base case
+			if d >= self.maxDepth or d >= len(tetrominoes):
+				score += self.minimaxOneDepth(state)
+
+			#if not leaf
 			else:
-				localScore += self.evalWithClearedLinesRemoved(state, tetrominoes, d+1)
+				if linesCleared:
+					tmpState = state.copy()
+					tmpState.deleteRows(linesCleared)
+					score += self.evalWithClearedLinesRemoved(tmpState, tetrominoes, d+1)[1]
+					del tmpState
+				else:
+					score += self.evalWithClearedLinesRemoved(state, tetrominoes, d+1)[1]
 
 			state.removeCoords(action.coords)
 
-			bestScore = max( bestScore, localScore)
+			if score > bestScore:
+				bestScore = score
+				bestAction = action
 
-		return bestScore
+		return (bestAction, bestScore)
 
 
 
@@ -160,7 +174,37 @@ class SimpleAI:
 		return localScore
 
 
+	def localEval(self, state, action):
+		state.setCoordsAsLanded(action.coords)
 
+		linesCleared = self.extractLinesCleared(state, GameLogic.Tetromino(action.coords))
+		localScore = self.weights["linesCleared"]*len(linesCleared)
+		localScore += self.localEval(state, action)
+
+		state.removeCoords(action.coords)
+
+		return localScore
+
+
+
+	def minimaxOneDepth(self, state):
+		minimizingScore = float('inf')
+		for t in GameLogic.Tetrominoes:
+
+			maximizingScore = float('-inf')
+			for a in self.possibleActions(state, t):
+				state.setCoordsAsLanded(a.coords)
+
+				linesCleared = self.extractLinesCleared(state, GameLogic.Tetromino(a.coords))
+				localScore = self.weights["linesCleared"]*len(linesCleared)
+				localScore += self.localEval(state, a)
+
+				state.removeCoords(a.coords)
+				maximizingScore = max(maximizingScore, localScore)
+
+			minimizingScore = min(minimizingScore, maximizingScore)
+
+		return minimizingScore
 
 	"""
 	Given the current piece, return all possible 
@@ -169,16 +213,12 @@ class SimpleAI:
 	def possibleActions(self, state, tetromino):
 		choices = []
 		t = tetromino.copy()
-		checked = Counter()
 		rot = 0
 		while True:
 			#print rot
 			self.moveTetrominoToLeftWall(t)
 			self.moveTetrominoToRoof(t)
 			right = t.rightMostX()
-
-			for coord in t.coords:
-				checked[coord] += 1
 
 			#Drop the piece at all possible x locations
 			while right <= state.width:
