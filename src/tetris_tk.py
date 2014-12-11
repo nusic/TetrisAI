@@ -391,7 +391,7 @@ class GameController(object):
         self.showGhostPiece = False
         self.updateGhostPiece()
 
-        self.numNextShapes = 0
+        self.numNextShapes = 4
         self.maxRuns = 10
         self.runs = 0
         self.userPickShape = False
