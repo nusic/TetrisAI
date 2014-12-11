@@ -349,13 +349,13 @@ class GameController(object):
         
         #lookup table
         self.shapes = [
-                    square_shape,
-                    t_shape,
+                    #square_shape,
+                    #t_shape,
                     l_shape,
-                    reverse_l_shape,
+                    #reverse_l_shape,
                     z_shape,
                     s_shape,
-                    i_shape 
+                    #i_shape 
                       ]
         
         self.thresholds = level_thresholds( 500, NO_OF_LEVELS )
@@ -391,7 +391,7 @@ class GameController(object):
         self.showGhostPiece = False
         self.updateGhostPiece()
 
-        self.numNextShapes = 1
+        self.numNextShapes = 0
         self.maxRuns = 10
         self.runs = 0
         self.userPickShape = False
@@ -608,6 +608,7 @@ class GameController(object):
                 
                 #t0 = time.clock()
                 tetromino = self.ai.getNextPieceOrientation(self.board.state, t)
+
                 #print time.clock()-t0
 
                 self.shape.setCoords(tetromino.coords)
@@ -651,7 +652,7 @@ class GameController(object):
     def create_shape( self, the_shape):
         shape = the_shape.check_and_create(self.board)
         if shape is not None:
-            shape.move("down")
+            pass#shape.move("down")
         return shape
 
 def shapeFromInput():

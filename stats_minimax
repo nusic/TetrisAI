@@ -1,0 +1,28 @@
+
+
+lookahead = 1
+k = 3
+minimax = False
+runs = 10
+Shapes: [L, Z, S]
+
+			min		max		avg		std
+SCORES:		2200.0	12700.0	5430.0	2972.6
+ TIMES:		3.8		12.9	7.1		2.7
+AVG SCORE / AVG TIME:  766.987176907
+
+
+------------------------------------------------------
+
+
+lookahead = 1
+k = 3
+minimax = True
+runs = 10
+Shapes: [L, Z, S]
+
+
+			min		max		avg		std
+SCORES:		1200.0	11000.0	4810.0	2684.9
+ TIMES:		42.6	172.6	88.9	34.8
+AVG SCORE / AVG TIME:  54.0830040963
