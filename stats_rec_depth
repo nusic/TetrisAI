@@ -1,6 +1,6 @@
 
 lookahead = 0
-k = 2
+k = 3
 minimax = False
 runs = 10
 Shapes: [L, Z, S]
@@ -14,7 +14,7 @@ AVG SCORE / AVG TIME:  1694.06248041
 ------------------------------------------------
 
 lookahead = 1
-k = 2
+k = 3
 minimax = False
 runs = 10
 Shapes: [L, Z, S]
@@ -26,7 +26,7 @@ AVG SCORE / AVG TIME:  762.033747287
 
 ------------------------------------------------
 lookahead = 2
-k = 2
+k = 3
 minimax = False
 runs = 10
 Shapes: [L, Z, S]
@@ -40,7 +40,7 @@ AVG SCORE / AVG TIME:  293.213714724
 ------------------------------------------------
 
 lookahead = 3
-k = 2
+k = 3
 minimax = False
 runs = 10
 Shapes: [L, Z, S]
