@@ -3,7 +3,7 @@ import time
 import GameLogic
 
 from collections import Counter
-from Globals import *
+from GlobalSettings import *
 
 
 """
@@ -12,24 +12,23 @@ from Globals import *
 """
 class SimpleAI:
 
-	def __init__(self, state, maxDepth):
+	def __init__(self):
 
 		#A set of weights for the features
 		self.weights = {
 			"tetrominoY" : 0.1, 
 			"numHoles" : -0.46, 
+			#"numHoles" : -0.66, 
 			"linesCleared" : 1, 
 			"aggregateHeight" : -0.66,
-			#"bumpiness" : -0.24,
-			"bumpiness" : -0.64,
+			"bumpiness" : -0.24,
+			#"bumpiness" : -0.64,
 			"gameOver" : -10000000
 			}
 
-		#max recursion depth - currently not used
-		self.maxDepth = maxDepth
-		self.statesExplored = 0
-		self.minimax = False
-		self.k = 3
+		self.maxDepth = LOOKAHEAD
+		self.minimax = MINIMAX_ON_LEAF_NODES
+		self.k = MAX_BRANCHING
 
 
 
@@ -201,7 +200,6 @@ class SimpleAI:
 	Evaluates the passed state based on the weights
 	"""
 	def localEval(self, state, tetromino):
-		self.statesExplored += 1
 		f = self.extractFeatures(state, tetromino)
 		s = 0
 		for w in self.weights:
@@ -236,12 +234,37 @@ class SimpleAI:
 			y0 = 0
 			while not state.landed.has_key( (x,y0) ) and y0 < state.height:
 				y0 += 1
-
+			
 			for y in range(y0+1,state.height):
 				if not state.landed.has_key( (x,y) ):
 					holes += 1
+		return holes
+
+
+
+	"""
+	Returns the number of holes in the passed state
+	"""
+	#Holes = each empty space with blocks above in same column
+	def extractNumHoles2(self, state, tetromino):
+		holes = 0
+		for x in range(state.width):
+			y0 = 0
+
+			while True:
+				while not state.landed.has_key( (x,y0) ) and y0 < state.height:
+					y0 += 1
+
+				while state.landed.has_key( (x,y0) ) and y0 < state.height:
+					y0 += 1
+
+				if y0 >= state.height:
+					break
+
+				holes += 1
 
 		return holes
+
 
 	def extractLinesCleared(self, state, tetromino):
 		y_range = range(tetromino.upperMostY(), tetromino.lowerMostY()+1)

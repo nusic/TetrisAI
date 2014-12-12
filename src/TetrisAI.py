@@ -23,7 +23,7 @@ import sys
 import collections
 import numpy
 
-from Globals import *
+from GlobalSettings import *
 import GameLogic
 import AI
 
@@ -36,6 +36,14 @@ def statsStr(samples):
             +"%0.1f"%max(samples)+"\t"\
             +"%0.1f"%numpy.mean(samples)+"\t"\
             +"%0.1f"%numpy.std(samples)
+
+def printStats():
+    print 
+    print "\tmin\tmax\tavg\tstd"
+    print "SCORES:\t",statsStr(scores)
+    print " TIMES:\t",statsStr(times)
+    print "AVG SCORE / AVG TIME: ", numpy.mean(scores)/numpy.mean(times)
+    print 
 
 
 def level_thresholds( first_level, no_of_levels ):
@@ -164,7 +172,7 @@ class shape(object):
         Move the blocks in the direction indicated by adding (dx, dy) to the
         current block coordinates
         """
-        d_x, d_y = direction_d[direction]
+        d_x, d_y = DIRECTIONS[direction]
         
         for block in self.blocks:
 
@@ -345,18 +353,10 @@ class GameController(object):
         self.nextShapes = []
         
 
-        
-        
         #lookup table
-        self.shapes = [
-                    #square_shape,
-                    #t_shape,
-                    l_shape,
-                    #reverse_l_shape,
-                    z_shape,
-                    s_shape,
-                    #i_shape 
-                      ]
+        self.shapes = []
+        self.shapes = [self.letterToTetromino(l) for l in TETROMINOES]
+
         
         self.thresholds = level_thresholds( 500, NO_OF_LEVELS )
         
@@ -388,13 +388,20 @@ class GameController(object):
         
 
         self.ghostPiece = None
-        self.showGhostPiece = False
-        self.updateGhostPiece()
+        self.showGhostPiece = not USE_AI and SHOW_GHOST_PIECE
+        
 
-        self.numNextShapes = 4
-        self.maxRuns = 10
+        self.numNextShapes = LOOKAHEAD
+        self.maxRuns = NUM_ITERATIONS
+        if TETROMINO_SEQUENCE:
+            self.maxRuns = 1
+
         self.runs = 0
         self.userPickShape = False
+
+        self.seq_index = 0
+        self.seq_loop = LOOP_SEQUENCE
+
 
         if self.userPickShape:
             self.shape = self.create_shape(shapeFromInput())
@@ -406,9 +413,21 @@ class GameController(object):
                 self.shape = self.create_shape(self.get_next_shapes(1)[0])
             #self.nextShapes += self.get_next_shapes(1)
 
-        self.ai = AI.SimpleAI(self.board.state, self.numNextShapes)
+
+        self.ai = AI.SimpleAI()
         self.t0 = time.clock()
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
+
+
+    def letterToTetromino(self, letter):
+        if letter.upper() == "O": return square_shape
+        if letter.upper() == "T": return t_shape
+        if letter.upper() == "L": return l_shape
+        if letter.upper() == "J": return reverse_l_shape
+        if letter.upper() == "Z": return z_shape
+        if letter.upper() == "S": return s_shape
+        if letter.upper() == "I": return i_shape
+        raise Exception("Cannot parse " + letter + " to Tetromino")
     
     def updateGhostPiece(self):
         if self.showGhostPiece:
@@ -421,7 +440,7 @@ class GameController(object):
             for block in self.shape.blocks:
                 coords.append( (block.x, block.y) )
 
-            gp = shape(self.board, coords, "black")
+            gp = shape(self.board, coords, [], "black")
 
             while gp.move( DOWN ):
                 pass
@@ -492,7 +511,7 @@ class GameController(object):
                     #f.close()
 
 
-                    if self.ai == None:
+                    if USE_AI == None:
                         tkMessageBox.showwarning(
                             title="GAME OVER",
                             message ="Score: %7d\tLevel: %d\t" % (
@@ -505,11 +524,7 @@ class GameController(object):
                     elif self.runs < self.maxRuns:
                         self.restart()
                     else:
-                        print 
-                        print "\tmin\tmax\tavg\tstd"
-                        print "SCORES:\t",statsStr(scores)
-                        print " TIMES:\t",statsStr(times)
-                        print "AVG SCORE / AVG TIME: ", numpy.mean(scores)/numpy.mean(times)
+                        printStats()
 
                         sys.exit(0)
 
@@ -545,9 +560,9 @@ class GameController(object):
                     block = self.board.state.landed.get((x,ay), None)
                     if block:
                         block = self.board.state.landed.pop((x,ay))
-                        dx,dy = direction_d[DOWN]
+                        dx,dy = DIRECTIONS[DOWN]
                         
-                        self.board.move_block(block, direction_d[DOWN])
+                        self.board.move_block(block, DIRECTIONS[DOWN])
                         self.board.state.landed[(x+dx, ay+dy)] = block
             deletes += 1
 
@@ -600,7 +615,7 @@ class GameController(object):
     def move_my_shape( self ):
         if self.shape:
             
-            if self.ai != None:
+            if USE_AI:
                 shapeCoords = [ (b.x, b.y) for b in self.shape.blocks ]
 
                 t = [GameLogic.Tetromino(shapeCoords, self.shape.rots)]
@@ -626,7 +641,20 @@ class GameController(object):
         """
         shapes = []
         for _ in range(num):
-            shapes.append(self.shapes[randint(0,len(self.shapes)-1)])
+            if TETROMINO_SEQUENCE:
+                if self.seq_index == -1:
+                    
+                    raise Exception("End of sequence!")
+                
+                shapes.append(self.letterToTetromino(TETROMINO_SEQUENCE[self.seq_index]))
+                self.seq_index += 1
+                self.seq_index %= len(TETROMINO_SEQUENCE)
+
+                if not self.seq_loop and self.seq_index == 0 :
+                    self.seq_index = -1
+
+            else:
+                shapes.append(self.shapes[randint(0,len(self.shapes)-1)])
         return shapes
 
     def dropShape(self,dropShape):
@@ -658,14 +686,10 @@ class GameController(object):
 def shapeFromInput():
     while True:
         s = raw_input("Enter shape [ O, T, L, J, Z, S, I ]: ").upper()
-        if s == "O": return square_shape
-        if s == "T": return t_shape
-        if s == "L": return l_shape
-        if s == "J": return reverse_l_shape
-        if s == "Z": return z_shape
-        if s == "S": return s_shape
-        if s == "I": return i_shape
-        print "invalid shape"
+        try:
+            return letterToTetromino(s)
+        except Exception, e:
+            print "invalid shape"
         
 if __name__ == "__main__":
     root = Tk()

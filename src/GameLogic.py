@@ -1,6 +1,6 @@
 import copy
 
-from Globals import *
+from GlobalSettings import *
 
 class State:
     """
@@ -172,7 +172,7 @@ class State:
                 for x in xrange(self.width):
                     block = self.landed.get((x,ay), None)
                     if block:
-                        dx,dy = direction_d[DOWN]
+                        dx,dy = DIRECTIONS[DOWN]
                         block = self.landed.pop((x,ay))
                         self.landed[(x+dx, ay+dy)] = block
 
@@ -201,12 +201,12 @@ class Tetromino:
         return min( y for (x,y) in self.coords )
 
     def move(self, direction):
-        d_x, d_y = direction_d[direction]
+        d_x, d_y = DIRECTIONS[direction]
         for i in range(len(self.coords)):
             self.coords[i] = (self.coords[i][0] + d_x, self.coords[i][1] + d_y)
 
     def skip(self, direction, n):
-        d_x, d_y = direction_d[direction]
+        d_x, d_y = DIRECTIONS[direction]
         for i in range(len(self.coords)):
             self.coords[i] = (self.coords[i][0] + d_x * n, self.coords[i][1] + d_y * n)
 
