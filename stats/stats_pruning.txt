@@ -1,0 +1,74 @@
+lookahead: 	0
+pruning: 	4,2
+
+1 : score: 72000 time: 9.709735
+2 : score: 25800 time: 2.988867
+3 : score: 35300 time: 4.919283
+4 : score: 61900 time: 8.099366
+5 : score: 4100 time: 0.711782
+6 : score: 10800 time: 1.736357
+7 : score: 160800 time: 22.049185
+8 : score: 58200 time: 8.319532
+9 : score: 2800 time: 0.552697
+10 : score: 46400 time: 5.708795
+11 : score: 48000 time: 6.48842
+12 : score: 68600 time: 8.875941
+13 : score: 41800 time: 5.442036
+14 : score: 110200 time: 14.872273
+15 : score: 31100 time: 4.283035
+
+mean score: 51853		mean time: 7.0
+std  score: 40002		std  time: 5.4
+
+-------------------------------------------
+
+lookahead: 	1
+pruning: 	4,2
+
+1 : score: 942500 time: 1626.35678
+2 : score: 112000 time: 193.766729
+3 : score: 272400 time: 474.38909
+4 : score: 222500 time: 400.881582
+5 : score: 58800 time: 103.443685
+6 : score: 100100 time: 146.143092
+7 : score: 596300 time: 997.41066
+8 : score: 152100 time: 276.490352
+9 : score: 750700 time: 1254.889255
+10: score: 823100 time: 1377.951082
+11: score: 582700 time: 1022.782051
+12: score: 249100 time: 420.899805
+13: score: 227600 time: 371.529769
+14: score: 705400 time: 1167.728824
+15: score: 37800 time: 54.083679
+
+mean score: 388873.3 		mean time: 659.2
+std  score: 299094.3 		std  time: 506.9
+
+
+----------------------------------------------
+
+lookahead: 	2
+pruning: 	4,2
+
+1 : score: 2856300 time: 10991.680399 
+2 : score: 2600 time: 11.735023 
+3 : score: 552800 time: 2092.017494 
+4 : score: 846900 time: 3114.813239 
+5 : score: 2317700 time: 8693.459191 
+6 : score: 3532000 time: 13966.897661 
+7 : score: 2290900 time: 8426.424767 
+8 : score: 541600 time: 1924.879471 
+9 : score: 373600 time: 1364.931025 
+10: score: 12742900 time: 48192.721209
+11: score: 185600 time: 677.441924 
+12: score: 3189600 time: 15647.977656 
+13: score: 837600 time: 4703.139183 
+14: score: 1773800 time: 9123.158705 
+15: score: 2862800 time: 13381.31203
+
+mean score: 2327100		mean time: 9487		sum time: 	142304s 
+std  score: 3118000		std  time: 11905				39.5h
+
+utan 2600 och 12742900
+mean score: 1704700		mean time:
+std  score: 1196600		std  time:
