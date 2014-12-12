@@ -19,13 +19,14 @@ DIRECTIONS = { "left": (-1, 0), "right": (1, 0), "down": (0, 1), "up": (0, -1) }
 
 
 #Random input tetrominoes
-TETROMINOES = "OTLJSZI" #Available: O T L J S Z I
-NUM_ITERATIONS = 10
+TETROMINOES = "SZ" #Available: O T L J S Z I
+NUM_ITERATIONS = 1
+NUM_GENERATIONS = 10
 
 #Input tetrominoes from sequence
-TETROMINO_SEQUENCE = ""
-with open('../sequences/seq1.txt', 'r') as f:
-	TETROMINO_SEQUENCE = f.read()
+TETROMINO_SEQUENCE = "OTLJSZILJL"
+#with open('../sequences/seq1.txt', 'r') as f:
+#	TETROMINO_SEQUENCE = f.read()
 
 LOOP_SEQUENCE = True
 

@@ -1,6 +1,8 @@
 import copy
 import time
 import GameLogic
+import random
+import os
 
 from collections import Counter
 from GlobalSettings import *
@@ -14,22 +16,22 @@ class SimpleAI:
 
 	def __init__(self):
 
+		# -0.36	     -0.66	      1.00	      0.00	     -0.44
+
 		#A set of weights for the features
 		self.weights = {
 			"tetrominoY" : 0.1, 
 			"numHoles" : -0.46, 
-			#"numHoles" : -0.66, 
 			"linesCleared" : 1, 
 			"aggregateHeight" : -0.66,
 			"bumpiness" : -0.24,
-			#"bumpiness" : -0.64,
-			"gameOver" : -10000000
 			}
 
 		self.maxDepth = LOOKAHEAD
 		self.minimax = MINIMAX_ON_LEAF_NODES
 		self.k = MAX_BRANCHING
 
+		self.sumScore = 0
 
 
 
@@ -47,12 +49,12 @@ class SimpleAI:
 
 		#Base case - leaf node of max depth
 		if d >= len(tetrominoes):
-			return ([(0,0)], 0)
+			return ([GameLogic.NullTetromino], 0)
 
 		actionsAndLocalScores = self.actionsAndLocalScoresSorted(state, tetrominoes[d])
 
 		bestScore = float("-inf")
-		bestAction = None
+		bestAction = GameLogic.NullTetromino
 		for i in xrange(min(self.k, len(actionsAndLocalScores))):
 			action, score = actionsAndLocalScores[i]
 
@@ -202,6 +204,11 @@ class SimpleAI:
 	def localEval(self, state, tetromino):
 		f = self.extractFeatures(state, tetromino)
 		s = 0
+
+		#if game over
+		if f["tetrominoY"] <= 2:
+			s = -1000000
+		
 		for w in self.weights:
 			if f[w] != None:
 				s += self.weights[w] * f[w]
@@ -219,10 +226,8 @@ class SimpleAI:
 		features["numHoles"] = self.extractNumHoles(state, tetromino)
 		features["aggregateHeight"] = self.extractAggregateHeight(state, tetromino)
 		features["bumpiness"] = self.extractBumpiness(state, tetromino)
-		features["gameOver"] = yMax <= 2
 
 		return features
-
 	
 	"""
 	Returns the number of holes in the passed state
@@ -298,5 +303,14 @@ class SimpleAI:
 
 	def moveTetrominoToRoof(self, tetromino):
 		tetromino.skip(UP, tetromino.upperMostY())
+
+
+	def mutate(self):
+		f = random.choice(self.weights.keys())
+		delta = random.sample( [-0.1, 0.1], 1)[0]
+		print "Mutating",f,"with",delta
+		self.weights[f] += delta
+
+
 
 

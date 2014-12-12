@@ -16,7 +16,8 @@ Controls:
 #Sebb was here
 #Changed and commited with sublime
 from Tkinter import *
-from random import randint
+import random
+
 import time
 import tkMessageBox
 import sys
@@ -30,6 +31,25 @@ import AI
 scores = []
 times = []
 
+trainData = []
+
+def trainDataStr():
+    s = ""
+    #Header
+    (weights, avg, std) = trainData[0]
+    for key in weights.keys():
+        s += str(key) + "\t"
+ 
+    s += " mean score" + "\t" + "std score" + "\n"
+
+    #Data
+    for weights, avg, std in trainData:
+        for w in weights:
+            s += "{:10.2f}".format(weights[w]) + "\t"
+        s += "{:10.2f}".format(avg)
+        s += "{:10.2f}".format(std)
+        s += "\n"
+    return s
 
 def statsStr(samples):
     return "%0.1f"%min(samples)+"\t"\
@@ -393,8 +413,9 @@ class GameController(object):
 
         self.numNextShapes = LOOKAHEAD
         self.maxRuns = NUM_ITERATIONS
-        if TETROMINO_SEQUENCE:
-            self.maxRuns = 1
+
+        self.generation = 0
+        self.maxGeneration = NUM_GENERATIONS
 
         self.runs = 0
         self.userPickShape = False
@@ -406,18 +427,20 @@ class GameController(object):
         if self.userPickShape:
             self.shape = self.create_shape(shapeFromInput())
         else:
-            if self.numNextShapes != 0:
-                self.nextShapes += self.get_next_shapes(self.numNextShapes+1)
-                self.shape = self.create_shape(self.nextShapes.pop(0))
-            else:
-                self.shape = self.create_shape(self.get_next_shapes(1)[0])
-            #self.nextShapes += self.get_next_shapes(1)
+            self.initNextShapes()
+            
 
 
         self.ai = AI.SimpleAI()
         self.t0 = time.clock()
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
 
+    def initNextShapes(self):
+        if self.numNextShapes != 0:
+            self.nextShapes = self.get_next_shapes(self.numNextShapes+1)
+            self.shape = self.create_shape(self.nextShapes.pop(0))
+        else:
+            self.shape = self.create_shape(self.get_next_shapes(1)[0])
 
     def letterToTetromino(self, letter):
         if letter.upper() == "O": return square_shape
@@ -450,10 +473,11 @@ class GameController(object):
     def restart(self):
         self.board.state.landed.clear()
         self.board.canvas.delete(ALL)
+        self.seq_index = 0
         self.score = 0
         self.level = 0
-        self.nextShapes += self.get_next_shapes(1)
-        self.shape = self.create_shape(self.nextShapes.pop(0))
+        self.initNextShapes()
+        #self.shape = self.create_shape(self.nextShapes.pop(0))
 
     def handle_move(self, direction):
 
@@ -500,7 +524,7 @@ class GameController(object):
                     t = time.clock() - self.t0
                     self.t0 = time.clock()
 
-                    print self.runs,":", "score:", self.score, "time:",t
+                    print self.generation,":",self.runs,":", "score:", self.score, "time:",t
 
                     scores.append(self.score)
                     times.append(t)
@@ -509,7 +533,6 @@ class GameController(object):
 
                     #f.write(",".join( str(scr) for scr in bestActionScores))
                     #f.close()
-
 
                     if USE_AI == None:
                         tkMessageBox.showwarning(
@@ -520,13 +543,27 @@ class GameController(object):
                             )
                         self.restart()
                         #Toplevel().destroy()
-
                     elif self.runs < self.maxRuns:
                         self.restart()
                     else:
                         printStats()
+                        if self.generation < self.maxGeneration:
 
-                        sys.exit(0)
+                            meanScore = numpy.mean(scores)
+                            stdScore = numpy.std(scores)
+                            trainData.append( (dict(self.ai.weights), meanScore, stdScore) )
+                            del scores[:]
+                            self.ai.mutate()
+                            self.ai.mutate()
+                            self.ai.mutate()
+
+                            self.generation += 1
+                            self.runs = 0
+                            self.restart()
+                        else:
+                            if trainData:
+                                print trainDataStr()
+                            sys.exit(0)
 
                 # do we go up a level?
                 if (self.level < NO_OF_LEVELS and 
@@ -543,6 +580,8 @@ class GameController(object):
                 return False
         self.updateGhostPiece()
         return True
+        
+
 
     def deleteRows(self, rows, empty_row=0):
         #delete the completed row
@@ -625,8 +664,8 @@ class GameController(object):
                 tetromino = self.ai.getNextPieceOrientation(self.board.state, t)
 
                 #print time.clock()-t0
-
                 self.shape.setCoords(tetromino.coords)
+
                 self.handle_move(DOWN)
                 self.after_id = self.parent.after( 0 , self.move_my_shape )
 
@@ -653,7 +692,7 @@ class GameController(object):
                     self.seq_index = -1
 
             else:
-                shapes.append(self.shapes[randint(0,len(self.shapes)-1)])
+                shapes.append(self.shapes[random.randint(0,len(self.shapes)-1)])
         return shapes
 
     def dropShape(self,dropShape):

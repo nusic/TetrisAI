@@ -249,4 +249,8 @@ Tetrominoes.append( Tetromino([(5,1),(4,1),(5,0),(6,0)] , [1] ) ) # S
 Tetrominoes.append( Tetromino([(4,0),(3,0),(5,0),(6,0)] , [1] ) ) # I
 
 
+NullTetromino = Tetromino([(5,2), (5,1), (5,0), (5,-1)] , [] )
+
+
+
 
