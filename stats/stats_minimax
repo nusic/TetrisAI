@@ -60,3 +60,47 @@ Shapes: [L, Z, S]
 SCORES:		4000.0	23800.0	11580.0	5967.0
 TIMES:		194.6	1079.1	514.8	257.9
 AVG SCORE / AVG TIME:  22.4926717987
+
+
+
+------------------ AFTER MINIMAX "FIX" ------------------------
+
+lookahead = 0
+k = 3
+minimax = True
+runs = 10
+Shapes: [L, Z, S]
+
+			min		max		avg		std
+SCORES:		1000.0	8900.0	3320.0	2771.2
+TIMES:		5.4		24.3	9.6		5.6
+AVG SCORE / AVG TIME:  345.300157518
+
+
+--------------------------------------------------------------
+
+lookahead = 1
+k = 3
+minimax = True
+runs = 10
+Shapes: [L, Z, S]
+
+		min		max		avg		std
+SCORES:	700.0	9000.0	4960.0	2249.1
+TIMES:	14.0	71.4	39.4	15.3
+AVG SCORE / AVG TIME:  125.844052041
+
+
+
+---------------------------------------------------------------
+
+lookahead = 2
+k = 3
+minimax = True
+runs = 10
+Shapes: [L, Z, S]
+
+		min		max		avg		std
+SCORES:	2100.0	27000.0	10350.0	7190.3
+TIMES:	69.6	526.0	206.7	128.0
+AVG SCORE / AVG TIME:  50.06789056
