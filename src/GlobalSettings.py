@@ -1,5 +1,3 @@
-
-
 #Playing field
 SCALE = 30
 OFFSET = 3
@@ -19,21 +17,21 @@ DIRECTIONS = { "left": (-1, 0), "right": (1, 0), "down": (0, 1), "up": (0, -1) }
 
 
 #Random input tetrominoes
-TETROMINOES = "OTLJSZI" #Available: O T L J S Z I
+TETROMINOES = "SZL" #Available: O T L J S Z I
 NUM_ITERATIONS = 10
 
 #Input tetrominoes from sequence
-TETROMINO_SEQUENCE = ""
-with open('../sequences/seq1.txt', 'r') as f:
-	TETROMINO_SEQUENCE = f.read()
+TETROMINO_SEQUENCE = None
+#with open('../sequences/seq1.txt', 'r') as f:
+#	TETROMINO_SEQUENCE = f.read()
 
-LOOP_SEQUENCE = True
+LOOP_SEQUENCE = False
 
 
 #AI
 USE_AI = True
 MAX_BRANCHING = 3
-LOOKAHEAD = 0
-MINIMAX_ON_LEAF_NODES = False
+LOOKAHEAD = 2
+MINIMAX_ON_LEAF_NODES = True
 
 SHOW_GHOST_PIECE = True

@@ -623,7 +623,6 @@ class GameController(object):
                 
                 #t0 = time.clock()
                 tetromino = self.ai.getNextPieceOrientation(self.board.state, t)
-
                 #print time.clock()-t0
 
                 self.shape.setCoords(tetromino.coords)
