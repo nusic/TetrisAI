@@ -51,5 +51,16 @@ SCORES:		9100	31300	22000 	6545.83837258
  TIMES:		100.999 344.16 	228.102	67.274 	
 AVG SCORE / AVG TIME:  
 
+------------------
+
+lookahead = 4
+k = 3
+minimax = False
+runs = 10
+Shapes: [L, Z, S]
+
+			min		max		avg		std
+SCORES:		31500	321200	126640	106877.47
+ TIMES:		992.78 	9068 	3682.81	3019.3
 
 

@@ -252,7 +252,6 @@ class shape(object):
         return True
 
 
-
 class shape_limited_rotate( shape ):
     """
     This is a base class for the shapes like the S, Z and I that don't fully
@@ -304,10 +303,11 @@ class l_shape( shape ):
         return super(l_shape, cls).check_and_create(board, coords, "orange", rots)
     
 
-        #  0 1 2 3 4 5 6
+        #  0 1 2 3 4 5 6 7 8 9 
         #0         X X X
         #1             X
         #2
+        #:
 class reverse_l_shape( shape ):
     @classmethod
     def check_and_create( cls, board ):
@@ -642,7 +642,6 @@ class GameController(object):
         for _ in range(num):
             if TETROMINO_SEQUENCE:
                 if self.seq_index == -1:
-                    
                     raise Exception("End of sequence!")
                 
                 shapes.append(self.letterToTetromino(TETROMINO_SEQUENCE[self.seq_index]))
