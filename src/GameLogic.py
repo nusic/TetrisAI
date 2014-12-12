@@ -260,4 +260,3 @@ if TETROMINO_SEQUENCE is not None:
     Tetrominoes.append( Tetromino([(4,0),(3,0),(5,0),(6,0)] , [1] ) ) # I
 else:   
     Tetrominoes = [letterToTetromino(l) for l in TETROMINOES]
-print Tetrominoes
