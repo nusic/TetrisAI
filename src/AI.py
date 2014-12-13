@@ -1,6 +1,7 @@
 import copy
 import time
 import GameLogic
+import numpy
 
 from collections import Counter
 from GlobalSettings import *
@@ -28,6 +29,7 @@ class SimpleAI:
 
 		self.maxDepth = LOOKAHEAD
 		self.minimax = MINIMAX_ON_LEAF_NODES
+		self.randomPolicyEval = RANDOM_POLICY_EVALUATON_ON_LEAF_NODE
 		self.k = MAX_BRANCHING
 
 
@@ -63,6 +65,8 @@ class SimpleAI:
 			if d >= self.maxDepth or d >= len(tetrominoes):
 				if self.minimax:
 					score += self.minimaxOneDepth(state)
+				if self.randomPolicyEval:
+					score += self.randomPolicyEvaluation(state)
 
 			#if not leaf
 			else:
@@ -143,6 +147,16 @@ class SimpleAI:
 
 		return minimizingScore
 
+	def randomPolicyEvaluation(self, state):
+		maxScore = []
+		for t in GameLogic.Tetrominoes:
+			possibleActions = self.possibleActions(state,t)
+			if len(possibleActions)>0:
+				maxScore.append(max([self.localEval(state,a) for a in possibleActions]))
+		if len(maxScore)>0:
+			return numpy.mean(maxScore)
+		else:
+			return 0
 
 	def actionsAndLocalScoresSorted(self, state, tetromino):
 		actionAndLocalScore = []
