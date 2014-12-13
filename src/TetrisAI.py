@@ -565,12 +565,15 @@ class GameController(object):
                     elif self.runs < self.maxRuns:
                         self.restart()
                     else:
-                        #if self.maxRuns > 1:
-                            #printStats()
-                        if self.generation < self.maxGeneration:
+                        
+                        if not LEARN_WEIGHTS:
+                            if self.maxRuns > 1:
+                                printStats()
+                        elif self.generation < self.maxGeneration:
 
                             meanScore = numpy.mean(scores)
                             stdScore = numpy.std(scores)
+
                             trainData.append( (dict(self.ai.weights), meanScore, stdScore) )
                             print self.generation, "mean score:", meanScore,
                             if meanScore > self.bestMeanScore:
@@ -600,7 +603,7 @@ class GameController(object):
                                 #print trainDataStr()
                                 print "best weights:"
                                 print weightsStr(self.bestWeights)
-                                f = open('../features/latestRandomSZ', 'w')
+                                f = open(OUTPUT_WEIGHTS, 'w')
                                 f.write(weightsStr(self.bestWeights))
                                 f.close()
                             sys.exit(0)

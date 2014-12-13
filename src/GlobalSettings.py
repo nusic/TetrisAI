@@ -19,11 +19,12 @@ DIRECTIONS = { "left": (-1, 0), "right": (1, 0), "down": (0, 1), "up": (0, -1) }
 
 
 #Random input tetrominoes
-TETROMINOES = "SZ" #Available: O T L J S Z I
-NUM_ITERATIONS = 5
+TETROMINOES = "ZSL" #Available: OTLJSZI
+NUM_ITERATIONS = 10
 
 # Randomly mutates feature weights after each generation
-NUM_GENERATIONS = 100
+LEARN_WEIGHTS = False
+NUM_GENERATIONS = 0
 
 
 #Input tetrominoes from deterministic sequence
@@ -41,7 +42,8 @@ LOOP_SEQUENCE = True
 USE_AI = True
 MAX_BRANCHING = 3
 LOOKAHEAD = 0
-MINIMAX_ON_LEAF_NODES = False
+MINIMAX_ON_LEAF_NODES = True
 RANDOM_POLICY_EVALUATON_ON_LEAF_NODE = False
 
-WEIGHTS_FILE = '../features/latestRandomSZ'
+WEIGHTS_FILE = '../features/OTLJSZI_15x8_lookahead1.txt'
+OUTPUT_WEIGHTS = "../features/tmp.txt"
