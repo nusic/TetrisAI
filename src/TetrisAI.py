@@ -600,7 +600,9 @@ class GameController(object):
                                 #print trainDataStr()
                                 print "best weights:"
                                 print weightsStr(self.bestWeights)
-
+                                f = open('../features/latestRandomSZ', 'w')
+                                f.write(weightsStr(self.bestWeights))
+                                f.close()
                             sys.exit(0)
 
                 # do we go up a level?

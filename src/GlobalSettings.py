@@ -44,4 +44,4 @@ LOOKAHEAD = 0
 MINIMAX_ON_LEAF_NODES = False
 RANDOM_POLICY_EVALUATON_ON_LEAF_NODE = False
 
-WEIGHTS_FILE = '../features/randomSZ.txt'
+WEIGHTS_FILE = '../features/latestRandomSZ'
