@@ -5,7 +5,6 @@ import random
 import os
 import numpy
 
-
 from collections import Counter
 from GlobalSettings import *
 
@@ -23,7 +22,7 @@ class SimpleAI:
 
 		self.maxDepth = LOOKAHEAD
 		self.minimax = MINIMAX_ON_LEAF_NODES
-		self.randomPolicyEval = RANDOM_POLICY_EVALUATON_ON_LEAF_NODE
+		self.expectimax = EXPECTIMAX_ON_LEAF_NODE
 		self.k = MAX_BRANCHING
 
 		self.sumScore = 0
@@ -60,8 +59,8 @@ class SimpleAI:
 			if d >= self.maxDepth or d >= len(tetrominoes):
 				if self.minimax:
 					score += self.minimaxOneDepth(state)
-				if self.randomPolicyEval:
-					score += self.randomPolicyEvaluation(state)
+				if self.expectimax:
+					score += self.expectimaxOnDepth(state)
 
 			#if not leaf
 			else:
@@ -142,7 +141,7 @@ class SimpleAI:
 
 		return minimizingScore
 
-	def randomPolicyEvaluation(self, state):
+	def expectimaxOnDepth(self, state):
 		maxScore = []
 		for t in GameLogic.Tetrominoes:
 			possibleActions = self.possibleActions(state,t)

@@ -600,7 +600,7 @@ class GameController(object):
                                 #print trainDataStr()
                                 print "best weights:"
                                 print weightsStr(self.bestWeights)
-                                f = open('../features/latestRandomSZ', 'w')
+                                f = open(WEIGHTS_FILE, 'w')
                                 f.write(weightsStr(self.bestWeights))
                                 f.close()
                             sys.exit(0)

@@ -19,11 +19,11 @@ DIRECTIONS = { "left": (-1, 0), "right": (1, 0), "down": (0, 1), "up": (0, -1) }
 
 
 #Random input tetrominoes
-TETROMINOES = "SZ" #Available: O T L J S Z I
+TETROMINOES = "SZT" #Available: O T L J S Z I
 NUM_ITERATIONS = 5
 
 # Randomly mutates feature weights after each generation
-NUM_GENERATIONS = 100
+NUM_GENERATIONS = 10
 
 
 #Input tetrominoes from deterministic sequence
@@ -42,6 +42,7 @@ USE_AI = True
 MAX_BRANCHING = 3
 LOOKAHEAD = 0
 MINIMAX_ON_LEAF_NODES = False
-RANDOM_POLICY_EVALUATON_ON_LEAF_NODE = False
+EXPECTIMAX_ON_LEAF_NODE = False
 
-WEIGHTS_FILE = '../features/latestRandomSZ'
+WEIGHTS_FILE = '../features/latestFullGame.txt'
+
