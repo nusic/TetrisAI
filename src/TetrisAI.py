@@ -33,8 +33,10 @@ times = []
 
 trainData = []
 
+
 def trainDataStr():
     s = ""
+
     #Header
     (weights, avg, std) = trainData[0]
     for key in weights.keys():
@@ -46,9 +48,23 @@ def trainDataStr():
     for weights, avg, std in trainData:
         for w in weights:
             s += "{:10.2f}".format(weights[w]) + "\t"
-        s += "{:10.2f}".format(avg)
-        s += "{:10.2f}".format(std)
-        s += "\n"
+
+    s += "{:10.2f}".format(avg)
+    s += "{:10.2f}".format(std)
+    s += "\n"
+    return s
+
+def weightsStr(weights):
+    s = ""
+    #Header
+    for key in weights.keys():
+        s += str(key) + "\t"
+
+    s += "\n"
+    #Data
+
+    for w in weights:
+        s += "{:10.2f}".format(weights[w]) + "\t"
     return s
 
 def statsStr(samples):
@@ -377,6 +393,7 @@ class GameController(object):
         self.shapes = []
         self.shapes = [self.letterToTetromino(l) for l in TETROMINOES]
 
+
         
         self.thresholds = level_thresholds( 500, NO_OF_LEVELS )
         
@@ -422,6 +439,9 @@ class GameController(object):
 
         self.seq_index = 0
         self.seq_loop = LOOP_SEQUENCE
+
+        self.bestMeanScore = float("-inf")
+        self.bestWeights = {}
 
 
         if self.userPickShape:
@@ -514,7 +534,6 @@ class GameController(object):
                 else:
                     self.shape = self.create_shape(self.nextShapes.pop(0))
                 
-                
                 # If the shape returned is None, then this indicates that
                 # that the check before creating it failed and the
                 # game is over!
@@ -524,7 +543,7 @@ class GameController(object):
                     t = time.clock() - self.t0
                     self.t0 = time.clock()
 
-                    print self.generation,":",self.runs,":", "score:", self.score, "time:",t
+                    #print self.generation,":",self.runs,":", "score:", self.score, "time:",t
 
                     scores.append(self.score)
                     times.append(t)
@@ -546,12 +565,28 @@ class GameController(object):
                     elif self.runs < self.maxRuns:
                         self.restart()
                     else:
-                        printStats()
+                        #if self.maxRuns > 1:
+                            #printStats()
                         if self.generation < self.maxGeneration:
 
                             meanScore = numpy.mean(scores)
                             stdScore = numpy.std(scores)
                             trainData.append( (dict(self.ai.weights), meanScore, stdScore) )
+                            print self.generation, "mean score:", meanScore,
+                            if meanScore > self.bestMeanScore:
+                                print "- updating weights!"
+
+                                self.bestMeanScore = meanScore
+                                self.bestWeights.clear()
+                                self.bestWeights = dict(self.ai.weights)
+
+                                #print weightsStr(self.bestWeights)
+
+                            else:
+                                print
+                                self.ai.weights.clear()
+                                self.ai.weights = dict(self.bestWeights)
+
                             del scores[:]
                             self.ai.mutate()
                             self.ai.mutate()
@@ -562,7 +597,10 @@ class GameController(object):
                             self.restart()
                         else:
                             if trainData:
-                                print trainDataStr()
+                                #print trainDataStr()
+                                print "best weights:"
+                                print weightsStr(self.bestWeights)
+
                             sys.exit(0)
 
                 # do we go up a level?
@@ -662,7 +700,6 @@ class GameController(object):
                 
                 #t0 = time.clock()
                 tetromino = self.ai.getNextPieceOrientation(self.board.state, t)
-
                 #print time.clock()-t0
                 self.shape.setCoords(tetromino.coords)
 

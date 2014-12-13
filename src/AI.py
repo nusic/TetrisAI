@@ -16,16 +16,8 @@ class SimpleAI:
 
 	def __init__(self):
 
-		# -0.36	     -0.66	      1.00	      0.00	     -0.44
-
-		#A set of weights for the features
-		self.weights = {
-			"tetrominoY" : 0.1, 
-			"numHoles" : -0.46, 
-			"linesCleared" : 1, 
-			"aggregateHeight" : -0.66,
-			"bumpiness" : -0.24,
-			}
+		self.weights = { }
+		self.readWeights(WEIGHTS_FILE)
 
 		self.maxDepth = LOOKAHEAD
 		self.minimax = MINIMAX_ON_LEAF_NODES
@@ -308,9 +300,17 @@ class SimpleAI:
 	def mutate(self):
 		f = random.choice(self.weights.keys())
 		delta = random.sample( [-0.1, 0.1], 1)[0]
-		print "Mutating",f,"with",delta
+		#print "Mutating",f,"with",delta
 		self.weights[f] += delta
 
+	def readWeights(self, filename):
+		with open(filename, 'r') as f:
+			lines = f.readlines()
 
-
+			fName = lines[0].split()
+			fWeight = lines[1].split()
+			print "Loading feature weights ..."
+			for i in range(len(fName)):
+				print fName[i], ":",fWeight[i]
+				self.weights[fName[i].strip()] = float(fWeight[i])
 

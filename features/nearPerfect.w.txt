@@ -1,1 +1,0 @@
-numHoles 	aggregateHeight 	linesCleared	tetrominoY 	bumpiness

@@ -1,0 +1,2 @@
+numHoles 	aggregateHeight linesCleared	tetrominoY 	bumpiness
+-0.46 		-0.66 			1.0 			0.1 		-0.24
