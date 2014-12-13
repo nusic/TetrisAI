@@ -22,6 +22,7 @@ class SimpleAI:
 
 		self.maxDepth = LOOKAHEAD
 		self.minimax = MINIMAX_ON_LEAF_NODES
+		self.maximax = MAXIMAX_ON_LEAF_NODES
 		self.expectimax = EXPECTIMAX_ON_LEAF_NODE
 		self.k = MAX_BRANCHING
 
@@ -59,8 +60,11 @@ class SimpleAI:
 			if d >= self.maxDepth or d >= len(tetrominoes):
 				if self.minimax:
 					score += self.minimaxOneDepth(state)
+				if self.maximax:
+					score += self.maximaxOneDepth(state)
 				if self.expectimax:
 					score += self.expectimaxOnDepth(state)
+
 
 			#if not leaf
 			else:
@@ -137,9 +141,22 @@ class SimpleAI:
 				localScore = self.localEval(state, a)
 				maximizingScore = max(maximizingScore, localScore)
 
-			minimizingScore = max(minimizingScore, maximizingScore)
+			minimizingScore = min(minimizingScore, maximizingScore)
 
 		return minimizingScore
+
+	def maximaxOneDepth(self, state):
+		maximizingScoreOuter = float('-inf')
+		for t in GameLogic.Tetrominoes:
+
+			maximizingScoreInner = float('-inf')
+			for a in self.possibleActions(state, t):
+				localScore = self.localEval(state, a)
+				maximizingScoreInner = max(maximizingScoreInner, localScore)
+
+			maximizingScoreOuter = max(maximizingScoreOuter, maximizingScoreInner)
+		
+		return maximizingScoreOuter
 
 	def expectimaxOnDepth(self, state):
 		maxScore = []
