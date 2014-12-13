@@ -137,7 +137,7 @@ class SimpleAI:
 				localScore = self.localEval(state, a)
 				maximizingScore = max(maximizingScore, localScore)
 
-			minimizingScore = min(minimizingScore, maximizingScore)
+			minimizingScore = max(minimizingScore, maximizingScore)
 
 		return minimizingScore
 
