@@ -1,0 +1,38 @@
+lookahead = 0
+k = 3
+random policy = True
+runs = 10
+Shapes: [L, Z, S]
+
+		min		max		avg		std
+SCORES:	1900.0	6800.0	3440.0	1486.1
+ TIMES:	5.6	17.0	8.7	3.4
+AVG SCORE / AVG TIME:  394.848761733
+
+
+
+--------------------------------------------
+lookahead = 1
+k = 3
+random policy = True
+runs = 10
+Shapes: [L, Z, S]
+
+		min		max		avg		std
+SCORES:	2200.0	8300.0	4860.0	1945.4
+ TIMES:	24.8	41.0	34.4	5.7
+AVG SCORE / AVG TIME:  141.212505723
+
+
+
+-------------------------------------------
+lookahead = 2
+k = 3
+random policy = True
+runs = 10
+Shapes: [L, Z, S]
+
+		min		max		avg		std
+SCORES:	4700.0	21100.0	10330.0	4684.2
+ TIMES:	86.8	328.2	186.4	69.2
+AVG SCORE / AVG TIME:  55.4141087631

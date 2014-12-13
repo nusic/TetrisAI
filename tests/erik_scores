@@ -6,3 +6,20 @@
 6 : score: 53500 time: 22.804075
 7 : score: 54900 time: 21.508376
 8 : score: 97800 time: 37.96589
+
+with ghost:
+tetrominoes: 115 	time: 150s
+eval time: 1.3s
+
+without ghost:
+tetrominoes: 104		time: 150s
+eval time: 1.44s
+
+14800
+37200
+13700
+42300
+73300
+53500
+54900
+97800
